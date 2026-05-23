@@ -142,3 +142,4 @@ credentials/
 # ai_service/models/
 # backend/uploads/
 # mobile-app/assets/generated/
+/generated/prisma

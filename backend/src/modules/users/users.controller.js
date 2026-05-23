@@ -1,0 +1,1 @@
+class TransactionsController {} module.exports = new TransactionsController();

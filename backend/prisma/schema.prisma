@@ -1,0 +1,29 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Minimalist operational schema baseline representing relational placeholders
+model User {
+  id           String        @id @default(uuid())
+  phoneNumber  String        @unique
+  name         String?
+  preferredLang String       @default("en") // en, kn, hi
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  type        String   // INCOME, EXPENSE
+  category    String   // Farming, Loan, Groceries, etc.
+  description String?
+  createdAt   DateTime @default(now())
+}

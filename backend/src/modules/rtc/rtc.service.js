@@ -1,0 +1,1 @@
+class RtcService {} module.exports = new RtcService();

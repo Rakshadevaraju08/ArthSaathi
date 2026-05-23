@@ -11,11 +11,9 @@ export default function RootLayout() {
     async function hideNavBar() {
       try {
         if (Platform.OS === 'android') {
-          await NavigationBar.setVisibilityAsync('hidden');
-          await NavigationBar.setBehaviorAsync('overlay-swipe');
+          await NavigationBar.setVisibilityAsync('visible');
         }
       } catch (error) {
-        // Navigation bar styling is not supported in Expo Go on some devices. Gracefully ignore.
       }
     }
     hideNavBar();
@@ -25,6 +23,7 @@ export default function RootLayout() {
     <SafeAreaProvider style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="screens/voice" options={{ presentation: 'modal' }} />

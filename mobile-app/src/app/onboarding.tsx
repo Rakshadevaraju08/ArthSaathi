@@ -98,7 +98,7 @@ export default function Onboarding() {
           <View>
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => { setOnboarded(true); router.replace('/(tabs)/home'); }}
+              onPress={() => { setOnboarded(true); router.replace('/(auth)/signup'); }}
             >
               <LinearGradient
                 colors={[C.emerald500, C.teal600]}

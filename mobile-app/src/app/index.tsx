@@ -1,5 +1,5 @@
-import { Redirect } from "expo-router";
+import { Redirect } from 'expo-router';
 
-export default function Index() {
-  return <Redirect href="/home" />;
+export default function AppEntry() {
+  return <Redirect href="/onboarding" />;
 }

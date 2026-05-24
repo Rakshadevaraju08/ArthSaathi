@@ -12,8 +12,6 @@ import { MicButton } from '../../components/voice/MicButton';
 import { Waveform } from '../../components/voice/Waveform';
 import { ChatBubble } from '../../components/voice/ChatBubble';
 import { C } from '../../constants/colors';
-import { transcribeAudio } from '../../services/whisper';
-import { endpoints } from '../../services/api';
 
 type VS = 'idle' | 'listening' | 'processing' | 'done';
 
@@ -32,7 +30,7 @@ export default function VoiceScreen() {
   const language       = useStore((s) => s.language);
   const scrollRef      = useRef<ScrollView>(null);
 
-  const [state,     setState]     = useState<VS>('idle');
+  const [state, setState] = useState<VS>('idle');
 
   /* ── Demo fallback flow ── */
   const runDemo = () => {
@@ -55,7 +53,7 @@ export default function VoiceScreen() {
   };
 
   const handleMic = () => {
-    if (state === 'idle')       startRec();
+    if (state === 'idle') startRec();
     else if (state === 'listening') stopRec();
   };
 

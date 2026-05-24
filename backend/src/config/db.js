@@ -1,16 +1,18 @@
-const { PrismaClient } = require('@prisma/client');
-const logger = require('../utils/logger');
+// src/config/db.js
+// Prisma client singleton — reuse across the app
 
-const prisma = new PrismaClient();
+const { PrismaClient } = require("@prisma/client");
 
-async function connectDB() {
-  try {
-    await prisma.$connect();
-    logger.info('🐘 PostgreSQL Database connected successfully via Prisma ORM.');
-  } catch (error) {
-    logger.error('❌ Database connection failure:', error);
-    process.exit(1);
-  }
-}
+const prisma = new PrismaClient({
+  log:
+    process.env.NODE_ENV === "development"
+      ? ["query", "info", "warn", "error"]
+      : ["error"],
+});
 
-module.exports = { prisma, connectDB };
+// Graceful shutdown
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
+});
+
+module.exports = prisma;

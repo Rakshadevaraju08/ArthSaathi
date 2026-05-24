@@ -1,27 +1,22 @@
-const ApiResponse = require('../utils/apiResponse');
+// src/middlewares/validate.middleware.js
+// Runs express-validator results and returns errors if any
 
-/**
- * Simple structural validation middleware. 
- * Replaces heavy external dependencies with a lightweight checklist for speedy hackathon iterations.
- */
-function validate(requiredFields, source = 'body') {
-  return (req, res, next) => {
-    const missingFields = [];
-    requiredFields.forEach(field => {
-      if (!req[source] || req[source][field] === undefined || req[source][field] === null) {
-        missingFields.push(field);
-      }
-    });
+const { validationResult } = require("express-validator");
+const { sendError } = require("../utils/apiResponse");
 
-    if (missingFields.length > 0) {
-      return ApiResponse.error(
-        res, 
-        `Validation Failed: Missing fields [${missingFields.join(', ')}]`, 
-        400
-      );
-    }
-    next();
-  };
-}
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return sendError(
+      res,
+      "Validation failed.",
+      422,
+      errors.array().map((e) => ({ field: e.path, message: e.msg }))
+    );
+  }
+
+  next();
+};
 
 module.exports = validate;

@@ -1,32 +1,63 @@
-/**
- * Express Application Configuration. 
- * Configures global middlewares, base routing matrices, and centralized error handling hooks.
- */
-const express = require('express');
-const cors = require('cors');
-const morganMiddleware = require('./src/middlewares/logger.middleware');
-const errorHandler = require('./src/middlewares/error.middleware');
-const apiRouter = require('./src/routes');
+// app.js
+// Express application setup — middleware stack + routes
+
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const path = require("path");
+
+const loggerMiddleware = require("./src/middlewares/logger.middleware");
+const errorMiddleware = require("./src/middlewares/error.middleware");
+const routes = require("./src/routes/index");
 
 const app = express();
 
-// Global Middleware pipeline
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morganMiddleware); // Request logging
+// ─────────────────────────────────────────
+// SECURITY MIDDLEWARES
+// ─────────────────────────────────────────
+app.use(helmet()); // Set security HTTP headers
+app.use(
+  cors({
+    origin: "*", // In production, restrict to your frontend domain
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// Base Routing Pipeline with strict Versioning
-app.use('/api/v1', apiRouter);
+// ─────────────────────────────────────────
+// BODY PARSERS
+// ─────────────────────────────────────────
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Global 404 Route handling fallback
-app.use((req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
-  res.status(404);
-  next(error);
+// ─────────────────────────────────────────
+// HTTP LOGGER
+// ─────────────────────────────────────────
+app.use(loggerMiddleware);
+
+// ─────────────────────────────────────────
+// STATIC FILES (uploaded documents served statically)
+// ─────────────────────────────────────────
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ─────────────────────────────────────────
+// API ROUTES
+// ─────────────────────────────────────────
+app.use("/api", routes);
+
+// ─────────────────────────────────────────
+// 404 HANDLER — unmatched routes
+// ─────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found.`,
+  });
 });
 
-// Centralized Error Handling Middleware Interceptor
-app.use(errorHandler);
+// ─────────────────────────────────────────
+// GLOBAL ERROR HANDLER (must be last)
+// ─────────────────────────────────────────
+app.use(errorMiddleware);
 
 module.exports = app;

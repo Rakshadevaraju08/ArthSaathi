@@ -1,30 +1,92 @@
-const jwt = require('jsonwebtoken');
-const env = require('../../config/environment');
+// src/modules/auth/auth.service.js
+// Business logic for registration and login
 
-class AuthService {
-  async authenticateUser(phoneNumber, mpin) {
-    // Hackathon execution validation logic (accepts any valid 4-digit MPIN for mock testing)
-    if (!mpin || mpin.length !== 4) {
-      throw new Error('Invalid MPIN configuration profiles supplied.');
-    }
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const prisma = require("../../config/db");
+const environment = require("../../config/environment");
 
-    // Static Mock Payload mapping representing a typical rural system user profile
-    const mockUser = {
-      id: "us-7749-karnataka",
-      phoneNumber: phoneNumber,
-      name: "Basavaraja Gowda",
-      preferredLang: "kn"
-    };
-
-    // Issue Stateless System Signature Token
-    const token = jwt.sign(
-      { id: mockUser.id, phoneNumber: mockUser.phoneNumber },
-      env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    return { user: mockUser, token };
+/**
+ * Register a new user
+ */
+const register = async ({ name, phone, email, password, language, village, district }) => {
+  // Check if phone already registered
+  const existingUser = await prisma.user.findUnique({ where: { phone } });
+  if (existingUser) {
+    const error = new Error("Phone number already registered.");
+    error.statusCode = 409;
+    throw error;
   }
-}
 
-module.exports = new AuthService();
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  // Create user
+  const user = await prisma.user.create({
+    data: {
+      name,
+      phone,
+      email: email || null,
+      password: hashedPassword,
+      language: language || "en",
+      village: village || null,
+      district: district || null,
+    },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      language: true,
+      village: true,
+      district: true,
+      createdAt: true,
+    },
+  });
+
+  // Generate JWT
+  const token = generateToken(user.id);
+
+  return { user, token };
+};
+
+/**
+ * Login an existing user
+ */
+const login = async ({ phone, password }) => {
+  // Find user by phone
+  const user = await prisma.user.findUnique({ where: { phone } });
+
+  if (!user) {
+    const error = new Error("Invalid phone number or password.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // Compare password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    const error = new Error("Invalid phone number or password.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // Generate JWT
+  const token = generateToken(user.id);
+
+  // Return user without password
+  const { password: _, ...userWithoutPassword } = user;
+
+  return { user: userWithoutPassword, token };
+};
+
+/**
+ * Generate JWT token
+ */
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, environment.jwt.secret, {
+    expiresIn: environment.jwt.expiresIn,
+  });
+};
+
+module.exports = { register, login };

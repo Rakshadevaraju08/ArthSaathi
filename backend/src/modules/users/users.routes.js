@@ -1,7 +1,18 @@
-const express = require('express');
+// src/modules/users/users.routes.js
+
+const express = require("express");
 const router = express.Router();
 
-// Placeholder route so Express doesn't crash
-router.get('/', (req, res) => res.json({ message: "Users module ready" }));
+const usersController = require("./users.controller");
+const authMiddleware = require("../../middlewares/auth.middleware");
 
-module.exports = router; // <-- Make sure this line is exactly here!
+// All user routes are protected
+router.use(authMiddleware);
+
+// GET /api/users/profile
+router.get("/profile", usersController.getProfile);
+
+// PUT /api/users/profile
+router.put("/profile", usersController.updateProfile);
+
+module.exports = router;

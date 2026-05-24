@@ -1,29 +1,109 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// ArthSaathi - Prisma Schema
+// Database: PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Minimalist operational schema baseline representing relational placeholders
-model User {
-  id           String        @id @default(uuid())
-  phoneNumber  String        @unique
-  name         String?
-  preferredLang String       @default("en") // en, kn, hi
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────
+// USER MODEL
+// ─────────────────────────────────────────
+model User {
+  id            String        @id @default(uuid())
+  name          String
+  phone         String        @unique
+  email         String?       @unique
+  password      String
+  language      String        @default("en") // preferred language (e.g., en, kn, hi)
+  village       String?
+  district      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  transactions Transaction[]
+  aiReports    AIReport[]
+  rtcRecords   RTCRecord[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// TRANSACTION MODEL
+// ─────────────────────────────────────────
 model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  amount      Float
-  type        String   // INCOME, EXPENSE
-  category    String   // Farming, Loan, Groceries, etc.
-  description String?
-  createdAt   DateTime @default(now())
+  id        String          @id @default(uuid())
+  userId    String
+  amount    Float
+  type      TransactionType // income | expense | saving
+  category  String          // Farming, Loan, Groceries, etc.
+  note      String?
+  date      DateTime        @default(now())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  income
+  expense
+  saving
+}
+
+// ─────────────────────────────────────────
+// AI REPORT MODEL
+// ─────────────────────────────────────────
+model AIReport {
+  id           String     @id @default(uuid())
+  userId       String
+  reportType   ReportType // financial_guidance | scam_detection | loan_analysis
+  inputData    Json       // what was sent to AI
+  aiResponse   Json       // what AI returned
+  createdAt    DateTime   @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_reports")
+}
+
+enum ReportType {
+  financial_guidance
+  scam_detection
+  loan_analysis
+}
+
+// ─────────────────────────────────────────
+// RTC RECORD MODEL
+// ─────────────────────────────────────────
+// Only showing the updated RTCRecord model
+// Replace the existing RTCRecord model in your schema.prisma with this:
+
+model RTCRecord {
+  id           String   @id @default(uuid())
+  userId       String
+  ownerName    String?
+  surveyNumber String?
+  landArea     String?
+  cropType     String?
+  village      String?
+  taluk        String?
+  district     String?
+  rawOCRData   Json?    // full raw response from OCR — no file data, just text fields
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("rtc_records")
 }

@@ -1,9 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const dashboardController = require('./dashboard.controller');
-const protect = require('../../middlewares/auth.middleware');
+// src/modules/dashboard/dashboard.routes.js
 
-// Target Implementation: GET /api/v1/dashboard (Secured Route Layer)
-router.get('/', protect, dashboardController.getSummary);
+const express = require("express");
+const router = express.Router();
+
+const dashboardController = require("./dashboard.controller");
+const authMiddleware = require("../../middlewares/auth.middleware");
+
+// GET /api/dashboard  (protected)
+router.get("/", authMiddleware, dashboardController.getDashboard);
 
 module.exports = router;

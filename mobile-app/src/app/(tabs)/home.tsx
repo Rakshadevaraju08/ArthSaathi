@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   ScrollView, View, Text, TouchableOpacity, RefreshControl,
 } from 'react-native';
@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useStore, useTotals } from '../../store';
 import { HealthScoreRing } from '../../components/home/HealthScoreRing';
+import { endpoints } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { C } from '../../constants/colors';
 
@@ -40,24 +41,51 @@ export default function HomeScreen() {
   const router   = useRouter();
   const { income, expense, savings, score } = useTotals();
   const transactions = useStore((s) => s.transactions);
+  const setTransactions = useStore((s) => s.setTransactions);
   const unread = useStore((s) => s.notifications.filter((n) => !n.read).length);
+  const user = useStore((s: any) => s.user);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const monthly = useMemo(() => [
-    { m: 'Jan', v: 0.15 * 12000 },
-    { m: 'Feb', v: 0.40 * 12000 },
-    { m: 'Mar', v: 0.25 * 12000 },
-    { m: 'Apr', v: 0.55 * 12000 },
-    { m: 'May', v: 0.30 * 12000 },
-    { m: 'Jun', v: expense > 0 ? expense : 0.82 * 12000 },
-  ], [expense]);
+  const locationStr = [user?.village, user?.district].filter(Boolean).join(', ') || 'Location not set';
+  const displayName = user?.name || 'User';
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await endpoints.getTransactions();
+      setTransactions(res.data.data);
+    } catch (error) {
+      console.warn('Failed to fetch transactions', error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  // Calculate real monthly spending dynamically from backend data
+  const monthly = useMemo(() => {
+    const result = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthName = d.toLocaleString('en-US', { month: 'short' });
+      const monthTx = transactions.filter((tx) => {
+        const txDate = new Date(tx.date);
+        return tx.type === 'expense' && txDate.getMonth() === d.getMonth() && txDate.getFullYear() === d.getFullYear();
+      });
+      const total = monthTx.reduce((sum, tx) => sum + tx.amount, 0);
+      result.push({ m: monthName, v: total });
+    }
+    return result;
+  }, [transactions]);
 
   const recentTx = transactions.slice(0, 3);
   const eligible = Math.max(10000, Math.round((savings * 6) / 1000) * 1000);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await fetchTransactions();
+    setRefreshing(false);
   };
 
   return (
@@ -87,10 +115,10 @@ export default function HomeScreen() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <View>
           <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#fff', lineHeight: 28 }}>
-            Namaste, Ramesh Patil
+            Namaste, {displayName}
           </Text>
           <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2, fontWeight: '500' }}>
-            📍 Sindagi, Karnataka
+            📍 {locationStr}
           </Text>
         </View>
 
@@ -460,7 +488,7 @@ export default function HomeScreen() {
                           {tx.category}
                         </Text>
                         <Text style={{ fontSize: 12, color: '#64748b', marginTop: 1 }} numberOfLines={1}>
-                          {tx.label}
+                          {tx.note}
                         </Text>
                       </View>
                     </View>

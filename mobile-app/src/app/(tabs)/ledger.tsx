@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, Alert,
@@ -12,6 +12,7 @@ import { BottomSheet } from '../../components/ui/BottomSheet';
 import { Card } from '../../components/ui/Card';
 import { C, CHART_COLORS } from '../../constants/colors';
 import { ALL_CATEGORIES } from '../../constants/categories';
+import { endpoints } from '../../services/api';
 import type { TxType } from '../../types';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
@@ -144,7 +145,7 @@ export default function LedgerScreen() {
   const [loanType,     setLoanType]     = useState<'lent' | 'borrowed'>('lent');
 
   const [form, setForm] = useState({
-    type: 'expense' as TxType, label: '', amount: '', category: 'Other',
+    type: 'expense' as TxType, note: '', amount: '', category: 'Other',
   });
   const [loanForm, setLoanForm] = useState({
     personName: '', amount: '', interestRate: '', dueDate: '',
@@ -167,11 +168,19 @@ export default function LedgerScreen() {
     return Object.entries(m).map(([name, value]) => ({ name, value }));
   }, [transactions]);
 
-  const submitTransaction = () => {
+  const submitTransaction = async () => {
     const amt = parseFloat(form.amount);
-    if (!amt || !form.label.trim()) { Alert.alert('Missing info', 'Fill in all fields'); return; }
-    addTransaction({ type: form.type, amount: amt, label: form.label.trim(), category: form.category });
-    setForm({ type: 'expense', label: '', amount: '', category: 'Other' });
+    if (!amt || !form.note.trim()) { Alert.alert('Missing info', 'Fill in all fields'); return; }
+    try {
+      await endpoints.addTransaction({
+        amount: amt,
+        type: form.type,
+        category: form.category,
+        note: form.note.trim(),
+      });
+    } catch { /* offline fallback — still add locally */ }
+    addTransaction({ type: form.type, amount: amt, note: form.note.trim(), category: form.category });
+    setForm({ type: 'expense', note: '', amount: '', category: 'Other' });
     setShowAdd(false);
   };
 
@@ -360,8 +369,11 @@ export default function LedgerScreen() {
                     key={tx.id}
                     tx={tx}
                     onPress={() =>
-                      Alert.alert(tx.label, `${tx.category} · ${tx.date}\n${fmt(tx.amount)}`, [
-                        { text: '🗑 Delete', style: 'destructive', onPress: () => removeTransaction(tx.id) },
+                      Alert.alert(tx.note, `${tx.category} · ${tx.date}\n${fmt(tx.amount)}`, [
+                        { text: '🗑 Delete', style: 'destructive', onPress: async () => {
+                          try { await endpoints.deleteTransaction(tx.id); } catch { /* offline fallback */ }
+                          removeTransaction(tx.id);
+                        }},
                         { text: 'Cancel', style: 'cancel' },
                       ])
                     }
@@ -498,8 +510,8 @@ export default function LedgerScreen() {
 
         {/* Description input */}
         <TextInput
-          value={form.label}
-          onChangeText={(v) => setForm({ ...form, label: v })}
+          value={form.note}
+          onChangeText={(v) => setForm({ ...form, note: v })}
           placeholder="Description / विवरण"
           placeholderTextColor="#94a3b8"
           style={{

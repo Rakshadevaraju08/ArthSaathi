@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ScrollView, View, Text, TextInput,
-  TouchableOpacity,
+  TouchableOpacity, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,9 +9,8 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { Shield, CheckCircle2, AlertTriangle } from 'lucide-react-native';
 import { useStore } from '../../store';
+import { endpoints } from '../../services/api';
 import { C } from '../../constants/colors';
-
-const KEYWORDS = ['otp','prize','lottery','urgent','verify','kyc','click','winner','aadhaar','bank account','free money','account blocked'];
 
 const COMMON_SCAMS = [
   { emoji: '📞', t: 'Fake KYC update calls',  d: "Never share OTP for 'KYC verification'. Banks never call asking for OTP." },
@@ -26,20 +25,25 @@ export default function ScamScreen() {
   const [text,    setText]    = useState('');
   const [loading, setLoading] = useState(false);
 
-  const analyze = () => {
+  const analyze = async () => {
     if (!text.trim()) return;
     setLoading(true);
     setScamResult(null);
-    setTimeout(() => {
-      const isScam = KEYWORDS.some((k) => text.toLowerCase().includes(k));
+    try {
+      const res = await endpoints.scamDetection(text.trim());
+      const { result } = res.data.data;
       setScamResult({
-        safe:    !isScam,
-        message: isScam
-          ? '⚠️ HIGH SCAM RISK — Never share OTP, bank details, or Aadhaar with unknown callers.'
-          : '✅ Looks Safe — Message appears legitimate. Stay cautious with unknown contacts.',
+        isScam: result.isScam,
+        confidence: result.confidence,
+        reason: result.reason,
+        warningLevel: result.warningLevel,
       });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Scam detection failed. Please try again.';
+      Alert.alert('Error', msg);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -107,16 +111,24 @@ export default function ScamScreen() {
           <Animated.View entering={ZoomIn.springify()}>
             <View
               className={`rounded-2xl p-4 border-2 flex-row items-start gap-2.5 ${
-                scamResult.safe ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
+                !scamResult.isScam ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
               }`}
             >
-              {scamResult.safe
+              {!scamResult.isScam
                 ? <CheckCircle2 size={20} color={C.emerald600} className="flex-shrink-0 mt-0.5" />
                 : <AlertTriangle size={20} color={C.rose600} className="flex-shrink-0 mt-0.5" />
               }
-              <Text className={`flex-1 text-sm font-medium leading-5 ${scamResult.safe ? 'text-emerald-800' : 'text-rose-800'}`}>
-                {scamResult.message}
-              </Text>
+              <View className="flex-1">
+                <Text className={`text-sm font-bold ${!scamResult.isScam ? 'text-emerald-800' : 'text-rose-800'}`}>
+                  {scamResult.isScam ? `⚠️ ${scamResult.warningLevel} SCAM RISK` : '✅ Looks Safe'}
+                </Text>
+                <Text className={`text-xs mt-1 leading-5 ${!scamResult.isScam ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  {scamResult.reason}
+                </Text>
+                <Text className={`text-[10px] mt-1 ${!scamResult.isScam ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  Confidence: {Math.round(scamResult.confidence * 100)}%
+                </Text>
+              </View>
             </View>
           </Animated.View>
         )}

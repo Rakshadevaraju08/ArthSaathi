@@ -1,9 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 import { MicFAB } from '../../components/MicFAB';
 import { C } from '../../constants/colors';
+import { useStore } from '../../store';
 
 function TabIcon({
   name,
@@ -28,6 +29,12 @@ function TabIcon({
 }
 
 export default function TabLayout() {
+  const loggedIn = useStore((s: any) => s.loggedIn);
+
+  if (!loggedIn) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <View className="flex-1">
       <Tabs

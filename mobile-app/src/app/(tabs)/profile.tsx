@@ -1,91 +1,30 @@
-import React, { useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
 import {
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  Switch,
+  ScrollView, View, Text,
+  TouchableOpacity, Switch,
 } from 'react-native';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { LinearGradient } from 'expo-linear-gradient';
-
 import { useRouter } from 'expo-router';
-
-import {
-  BellRing,
-  Shield,
-  Type,
-  Fingerprint,
-  Languages,
-  ChevronRight,
-  LogOut,
-} from 'lucide-react-native';
-
-import { Feather } from '@expo/vector-icons';
-
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { useStore } from '../../store';
-
+import { endpoints } from '../../services/api';
 import { C } from '../../constants/colors';
-
 import type { Lang } from '../../types';
 
-const LANGS: {
-  code: Lang;
-  native: string;
-}[] = [
-  {
-    code: 'Hindi',
-    native: 'Hindi',
-  },
-
-  {
-    code: 'English',
-    native: 'English',
-  },
-
-  {
-    code: 'Marathi',
-    native: 'Marathi',
-  },
-
-  {
-    code: 'Tamil',
-    native: 'Tamil',
-  },
-
-  {
-    code: 'Telugu',
-    native: 'Telugu',
-  },
+const LANGS: { code: Lang; native: string }[] = [
+  { code: 'Hindi',   native: 'Hindi'   },
+  { code: 'English', native: 'English' },
+  { code: 'Marathi', native: 'Marathi' },
+  { code: 'Tamil',   native: 'Tamil'   },
+  { code: 'Telugu',  native: 'Telugu'  },
 ];
 
 const TOGGLES = [
-  {
-    key: 'notif',
-    label: 'Notifications',
-    Icon: BellRing,
-  },
-
-  {
-    key: 'fraud',
-    label: 'Fraud Alerts',
-    Icon: Shield,
-  },
-
-  {
-    key: 'largeText',
-    label: 'Large Text',
-    Icon: Type,
-  },
-
-  {
-    key: 'biometric',
-    label: 'Biometric',
-    Icon: Fingerprint,
-  },
+  { key: 'notif',     label: 'Enable Fraud Warnings',    Icon: (p: any) => <Feather      name="bell"        {...p} /> },
+  { key: 'fraud',     label: 'Notifications Alerts',     Icon: (p: any) => <Feather      name="shield"      {...p} /> },
+  { key: 'largeText', label: 'Large Accessibility Text', Icon: (p: any) => <Feather      name="type"        {...p} /> },
+  { key: 'biometric', label: 'Biometric Passkey Access', Icon: (p: any) => <MaterialIcons name="fingerprint" {...p} /> },
 ] as const;
 
 const MENU = [
@@ -95,278 +34,197 @@ const MENU = [
 ];
 
 export default function ProfileScreen() {
+  const router      = useRouter();
+  const language    = useStore((s) => s.language);
+  const setLanguage = useStore((s) => s.setLanguage);
+  const user        = useStore((s: any) => s.user);
 
-  const router = useRouter();
+  const [toggles, setToggles] = useState({
+    notif: true, fraud: true, largeText: false, biometric: true,
+  });
 
-  // Zustand
-  const language = useStore(
-    (s) => s.language
-  );
+  const toggle = (k: keyof typeof toggles) =>
+    setToggles((p) => ({ ...p, [k]: !p[k] }));
 
-  const setLanguage = useStore(
-    (s) => s.setLanguage
-  );
+  // Fetch latest profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await endpoints.getProfile();
+        const fetchedUser = res.data.data;
+        useStore.setState({ user: fetchedUser });
+        if (fetchedUser.language) {
+          setLanguage(fetchedUser.language as Lang);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch latest profile:', error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
-  const setLoggedIn = useStore(
-    (s) => s.setLoggedIn
-  );
-
-  const setOnboarded = useStore(
-    (s) => s.setOnboarded
-  );
-
-  // Local toggles
-  const [toggles, setToggles] =
-    useState({
-      notif: true,
-      fraud: true,
-      largeText: false,
-      biometric: true,
-    });
-
-  const toggle = (
-    k: keyof typeof toggles
-  ) => {
-
-    setToggles((p) => ({
-      ...p,
-      [k]: !p[k],
-    }));
+  const handleLanguageChange = async (code: Lang) => {
+    setLanguage(code); // Update UI instantly
+    try {
+      await endpoints.updateProfile({ language: code });
+      useStore.setState((s: any) => ({ user: { ...s.user, language: code } }));
+    } catch (error) {
+      console.warn('Failed to save language to backend', error);
+    }
   };
 
-  // ─────────────────────────────
-  // Logout
-  // ─────────────────────────────
-  const handleLogout = () => {
-
-    // Remove login state
-    setLoggedIn(false);
-
-    // Reset onboarding flag so it shows up next time
-    setOnboarded(false);
-
-    // Redirect directly to onboarding
-    router.replace('/onboarding');
+  const handleLogout = async () => {
+    useStore.setState({ loggedIn: false, token: null, user: null });
+    router.replace('/(auth)/login');
   };
+
+  const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase() : 'U';
+  const locationStr = [user?.village, user?.district].filter(Boolean).join(', ') || 'Location not set';
+  const displayName = user?.name || 'ArthSaathi User';
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-
+    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{
-          paddingBottom: 100,
-        }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
 
-        {/* Header */}
+        {/* ── Profile header card — Kotlin emerald gradient card ── */}
         <LinearGradient
-          colors={[
-            C.emerald600,
-            C.teal600,
-          ]}
-          start={{
-            x: 0,
-            y: 0,
-          }}
-          end={{
-            x: 1,
-            y: 1,
-          }}
-          className="px-4 pt-4 pb-6 rounded-b-3xl"
+          colors={[C.emerald600, C.teal600]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="mx-4 mt-4 rounded-[18px] p-5"
         >
+          <View className="flex-row items-center gap-4">
 
-          <View className="flex-row items-center justify-between">
-
-            {/* Left */}
-            <View className="flex-row items-center gap-3">
-
-              <View className="w-14 h-14 rounded-full bg-white/20 border-2 border-white/40 items-center justify-center">
-
-                <Text className="text-xl font-bold text-white">
-                  RP
-                </Text>
-
-              </View>
-
-              <View>
-
-                <Text className="text-base font-bold text-white">
-                  Ramesh Patil
-                </Text>
-
-                <Text className="text-xs text-white/80">
-                  Sindagi, Karnataka
-                </Text>
-
-                <Text className="text-[10px] text-white/60 mt-0.5">
-                  Member since Apr 2025
-                </Text>
-
-              </View>
+            {/* Avatar — white circle with emerald initials */}
+            <View className="w-14 h-14 rounded-full bg-white items-center justify-center">
+              <Text className="text-xl font-black text-emerald-600">
+                {getInitials(displayName)}
+              </Text>
             </View>
 
-            {/* Right */}
-            <View className="w-11 h-11 rounded-full bg-white/20 border border-white/30 items-center justify-center">
-
-              <Feather
-                name="user"
-                size={22}
-                color="white"
-              />
-
+            {/* Name + location */}
+            <View className="flex-1">
+              <Text className="text-lg font-black text-white">
+                {displayName}
+              </Text>
+              <Text className="text-xs text-emerald-50 mt-0.5">
+                📍 {locationStr}
+              </Text>
             </View>
 
           </View>
-
         </LinearGradient>
 
-        {/* Body */}
         <View className="px-4 mt-4 gap-3">
 
-          {/* Language */}
-          <View className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
+          {/* ── Language selector ── */}
+          <View className="bg-white rounded-2xl p-4 border border-slate-100">
 
-            <View className="flex-row items-center gap-2 mb-2">
+            <Text className="text-sm font-black text-slate-800 mb-3">
+              Select Language 
+            </Text>
 
-              <Languages
-                size={16}
-                color={C.emerald600}
-              />
-
-              <Text className="text-sm font-semibold text-slate-800">
-                App Language
-              </Text>
-
-            </View>
-
-            <View className="flex-row flex-wrap gap-2">
-
+            <View className="flex-row gap-1.5">
               {LANGS.map((l) => (
                 <TouchableOpacity
                   key={l.code}
-                  onPress={() =>
-                    setLanguage(l.code)
-                  }
-                  className={`px-3 py-1 rounded-full ${
+                  onPress={() => handleLanguageChange(l.code)}
+                  className={`flex-1 py-2 rounded-xl items-center border ${
                     language === l.code
-                      ? 'bg-emerald-500'
-                      : 'bg-slate-100'
+                      ? 'bg-emerald-500 border-emerald-600'
+                      : 'bg-white border-slate-300'
                   }`}
                 >
-
-                  <Text
-                    className={`text-xs font-medium ${
-                      language === l.code
-                        ? 'text-white'
-                        : 'text-slate-600'
-                    }`}
-                  >
+                  <Text className={`text-[11px] font-bold ${
+                    language === l.code
+                      ? 'text-white'
+                      : 'text-slate-700'
+                  }`}>
                     {l.native}
                   </Text>
-
                 </TouchableOpacity>
               ))}
-
             </View>
 
           </View>
 
-          {/* Toggles */}
-          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+          {/* ── Preferences toggles ── */}
+          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+
+            <Text className="text-sm font-black text-slate-800 px-4 pt-4 pb-3">
+              Preferences 
+            </Text>
 
             {TOGGLES.map((row, i) => (
               <View
                 key={row.key}
-                className={`flex-row items-center gap-3 p-4 ${
-                  i <
-                  TOGGLES.length - 1
+                className={`flex-row items-center gap-3 px-4 py-3.5 ${
+                  i < TOGGLES.length - 1
                     ? 'border-b border-slate-100'
                     : ''
                 }`}
               >
+                <row.Icon size={16} color={C.slate500} />
 
-                <row.Icon
-                  size={18}
-                  color={C.slate500}
-                />
-
-                <Text className="flex-1 text-sm text-slate-700">
+                <Text className="flex-1 text-sm font-medium text-slate-700">
                   {row.label}
                 </Text>
 
                 <Switch
                   value={toggles[row.key]}
-                  onValueChange={() =>
-                    toggle(row.key)
-                  }
-                  trackColor={{
-                    false: C.slate200,
-                    true: C.emerald400,
-                  }}
+                  onValueChange={() => toggle(row.key)}
+                  trackColor={{ false: C.slate200, true: C.emerald500 }}
                   thumbColor={C.white}
                 />
-
               </View>
             ))}
 
           </View>
 
-          {/* Menu */}
-          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+          {/* ── More menu ── */}
+          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
 
             {MENU.map((item, i) => (
               <TouchableOpacity
                 key={item}
-                className={`flex-row items-center justify-between p-4 ${
+                activeOpacity={0.7}
+                className={`flex-row items-center justify-between px-4 py-4 ${
                   i < MENU.length - 1
                     ? 'border-b border-slate-100'
                     : ''
                 }`}
               >
-
-                <Text className="text-sm text-slate-700">
+                <Text className="text-sm font-medium text-slate-700">
                   {item}
                 </Text>
-
-                <ChevronRight
-                  size={16}
-                  color={C.slate300}
-                />
-
+                <Feather name="chevron-right" size={14} color={C.slate400} />
               </TouchableOpacity>
             ))}
 
           </View>
 
-          {/* Logout */}
+          {/* ── Sign out button — Kotlin rose50 style ── */}
           <TouchableOpacity
             onPress={handleLogout}
             activeOpacity={0.85}
-            className="bg-rose-50 border border-rose-100 rounded-2xl py-4 flex-row items-center justify-center gap-2"
+            className="bg-rose-50 border border-rose-100 rounded-2xl py-4 items-center justify-center"
           >
-
-            <LogOut
-              size={18}
-              color={C.rose600}
-            />
-
-            <Text className="text-sm font-semibold text-rose-600">
-              Log out
+            <Text className="text-sm font-bold text-rose-600">
+              Sign Out
             </Text>
-
           </TouchableOpacity>
 
-          {/* Footer */}
-          <Text className="text-center text-[10px] text-slate-400 mt-2">
-            ArthSaathi v1.2.0
+          {/* ── Version footer ── */}
+          <Text className="text-center text-[11px] text-slate-500 mt-1 mb-2">
+            Version 1.0.4 · Made for Indian Farmers
           </Text>
 
         </View>
-
       </ScrollView>
-
     </SafeAreaView>
   );
 }

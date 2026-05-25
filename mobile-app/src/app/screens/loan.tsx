@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  ScrollView, View, Text, TouchableOpacity, TextInput,
+  ScrollView, View, Text, TouchableOpacity, TextInput, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,6 +10,7 @@ import { useStore, useTotals } from '../../store';
 import { RiskGauge } from '../../components/ui/RiskGauge';
 import { Card } from '../../components/ui/Card';
 import { C } from '../../constants/colors';
+import { endpoints } from '../../services/api';
 import type { LoanRisk } from '../../types';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
@@ -31,28 +32,52 @@ const RESULT_CFG = {
 
 export default function LoanScreen() {
   const router      = useRouter();
-  const { savings } = useTotals();
+  const { income }  = useTotals();
   const loanRisk    = useStore((s) => s.loanRisk);
   const setLoanRisk = useStore((s) => s.setLoanRisk);
 
-  const [amount,   setAmount]   = useState(50000);
-  const [months,   setMonths]   = useState(24);
-  const [analyzed, setAnalyzed] = useState(false);
-  const [loading,  setLoading]  = useState(false);
+  const [amount,       setAmount]       = useState(50000);
+  const [months,       setMonths]       = useState(24);
+  const [interestRate, setInterestRate] = useState(12);
+  const [monthlyIncome, setMonthlyIncome] = useState(income > 0 ? income : 15000);
+  const [analyzed,     setAnalyzed]     = useState(false);
+  const [loading,      setLoading]      = useState(false);
 
-  const safeSavings = Math.max(savings, 1000);
-  const monthlyEMI  = Math.round((amount * 1.12) / months);
-  const ratio       = (monthlyEMI / safeSavings) * 100;
-  const recMax      = Math.max(10000, Math.round(safeSavings * months * 0.6 / 1000) * 1000);
+  // Backend response data
+  const [analysisResult, setAnalysisResult] = useState<{
+    emi: number;
+    totalRepayment: number;
+    riskLevel: string;
+    debtToIncomeRatio: string;
+    recommendation: string;
+  } | null>(null);
 
-  const analyze = () => {
+  // Local EMI estimate (for preview before analyze)
+  const localEMI = Math.round((amount * (1 + interestRate / 100)) / months);
+
+  const analyze = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const risk: LoanRisk = ratio < 40 ? 'safe' : ratio < 70 ? 'moderate' : 'high';
+    try {
+      const res = await endpoints.loanAnalysis({
+        loanAmount: amount,
+        interestRate,
+        tenureMonths: months,
+        monthlyIncome,
+      });
+      const { result } = res.data.data;
+      setAnalysisResult(result);
+
+      // Map backend riskLevel to store's LoanRisk type
+      const level = result.riskLevel?.toUpperCase();
+      const risk: LoanRisk = level === 'LOW' ? 'safe' : level === 'MEDIUM' ? 'moderate' : 'high';
       setLoanRisk(risk);
       setAnalyzed(true);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Loan analysis failed. Please try again.';
+      Alert.alert('Error', msg);
+    } finally {
       setLoading(false);
-    }, 1400);
+    }
   };
 
   const r = RESULT_CFG[loanRisk];
@@ -112,12 +137,44 @@ export default function LoanScreen() {
           </Card>
         </View>
 
+        {/* Interest Rate */}
+        <View>
+          <Card className="p-4">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-xs font-medium text-slate-600">Interest Rate (%)</Text>
+              <Text className="text-sm font-bold text-emerald-600">{interestRate}%</Text>
+            </View>
+            <TextInput
+              value={String(interestRate)}
+              onChangeText={(v) => setInterestRate(Number(v.replace(/[^0-9.]/g, '')) || 0)}
+              keyboardType="numeric"
+              className="border border-slate-200 rounded-xl px-3 py-2 text-base font-bold text-slate-800 bg-slate-50"
+            />
+          </Card>
+        </View>
+
+        {/* Monthly Income */}
+        <View>
+          <Card className="p-4">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-xs font-medium text-slate-600">Monthly Income</Text>
+              <Text className="text-sm font-bold text-emerald-600">{fmt(monthlyIncome)}</Text>
+            </View>
+            <TextInput
+              value={String(monthlyIncome)}
+              onChangeText={(v) => setMonthlyIncome(Number(v.replace(/[^0-9]/g, '')) || 0)}
+              keyboardType="numeric"
+              className="border border-slate-200 rounded-xl px-3 py-2 text-base font-bold text-slate-800 bg-slate-50"
+            />
+          </Card>
+        </View>
+
         {/* EMI preview */}
         <View>
           <View className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
             <Text className="text-xs text-emerald-700">Estimated Monthly EMI</Text>
-            <Text className="text-3xl font-black text-emerald-700 my-0.5">{fmt(monthlyEMI)}</Text>
-            <Text className="text-[11px] text-emerald-500">at 12% annual interest rate</Text>
+            <Text className="text-3xl font-black text-emerald-700 my-0.5">{fmt(localEMI)}</Text>
+            <Text className="text-[11px] text-emerald-500">at {interestRate}% annual interest rate</Text>
           </View>
         </View>
 
@@ -141,7 +198,9 @@ export default function LoanScreen() {
               <r.Icon size={22} color={r.iconColor} />
               <View className="flex-1">
                 <Text className={`text-sm font-bold ${r.text}`}>{r.title}</Text>
-                <Text className={`text-xs mt-1 ${r.text} opacity-80`}>{r.msg}</Text>
+                <Text className={`text-xs mt-1 ${r.text} opacity-80`}>
+                  {analysisResult?.recommendation || r.msg}
+                </Text>
               </View>
             </View>
 
@@ -153,13 +212,34 @@ export default function LoanScreen() {
             <View className="flex-row gap-2">
               <Card className="flex-1 p-3">
                 <Text className="text-[10px] text-slate-500">Monthly EMI</Text>
-                <Text className="text-base font-bold text-slate-800 mt-0.5">{fmt(monthlyEMI)}</Text>
+                <Text className="text-base font-bold text-slate-800 mt-0.5">
+                  {fmt(analysisResult?.emi ?? localEMI)}
+                </Text>
               </Card>
               <Card className="flex-1 p-3">
-                <Text className="text-[10px] text-slate-500">Recommended Max</Text>
-                <Text className="text-base font-bold text-emerald-600 mt-0.5">{fmt(recMax)}</Text>
+                <Text className="text-[10px] text-slate-500">Total Repayment</Text>
+                <Text className="text-base font-bold text-emerald-600 mt-0.5">
+                  {fmt(analysisResult?.totalRepayment ?? localEMI * months)}
+                </Text>
               </Card>
             </View>
+
+            {analysisResult && (
+              <View className="flex-row gap-2">
+                <Card className="flex-1 p-3">
+                  <Text className="text-[10px] text-slate-500">Debt-to-Income</Text>
+                  <Text className="text-base font-bold text-slate-800 mt-0.5">
+                    {analysisResult.debtToIncomeRatio}
+                  </Text>
+                </Card>
+                <Card className="flex-1 p-3">
+                  <Text className="text-[10px] text-slate-500">Risk Level</Text>
+                  <Text className="text-base font-bold text-slate-800 mt-0.5">
+                    {analysisResult.riskLevel}
+                  </Text>
+                </Card>
+              </View>
+            )}
 
             <Card className="p-4">
               <Text className="text-sm font-bold text-slate-800 mb-2.5">💡 Tips to improve eligibility</Text>

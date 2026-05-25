@@ -8,6 +8,7 @@ import type {
   LoanRisk,
   RtcData,
   ScamResult,
+  User,
 } from '../types';
 
 // ─────────────────────────────
@@ -25,20 +26,14 @@ export type Loan = {
   date: string;
 };
 
-const today = new Date();
-
-const d = (offset: number) => {
-  const x = new Date(today);
-
-  x.setDate(x.getDate() - offset);
-
-  return x.toISOString().slice(0, 10);
-};
-
 type Store = {
   // ─────────────────────────────
   // State
   // ─────────────────────────────
+  token: string | null;
+
+  user: User | null;
+
   transactions: Transaction[];
 
   notifications: Notif[];
@@ -64,10 +59,22 @@ type Store = {
   // ─────────────────────────────
   // Actions
   // ─────────────────────────────
+  setToken: (
+    t: string | null
+  ) => void;
+
+  setUser: (
+    u: User | null
+  ) => void;
+
   addTransaction: (
     t: Omit<Transaction, 'id' | 'date'> & {
       date?: string;
     }
+  ) => void;
+
+  setTransactions: (
+    txs: Transaction[]
   ) => void;
 
   removeTransaction: (
@@ -128,115 +135,17 @@ export const useStore = create<Store>(
     // ─────────────────────────────
     // Initial State
     // ─────────────────────────────
+    token: null,
+
+    user: null,
+
     transactions: [
-      {
-        id: 't1',
-        type: 'expense',
-        amount: 3000,
-        category: 'Fertilizer',
-        label: 'DAP fertilizer 2 bags',
-        date: d(1),
-      },
-
-      {
-        id: 't2',
-        type: 'income',
-        amount: 4500,
-        category: 'Milk Sale',
-        label: 'Weekly milk collection',
-        date: d(2),
-      },
-
-      {
-        id: 't3',
-        type: 'expense',
-        amount: 1200,
-        category: 'Seeds',
-        label: 'Tomato hybrid seeds',
-        date: d(4),
-      },
-
-      {
-        id: 't4',
-        type: 'expense',
-        amount: 2200,
-        category: 'Labour',
-        label: '3 day wages',
-        date: d(6),
-      },
-
-      {
-        id: 't5',
-        type: 'income',
-        amount: 12000,
-        category: 'Crop Sale',
-        label: 'Sugarcane partial sale',
-        date: d(9),
-      },
-
-      {
-        id: 't6',
-        type: 'expense',
-        amount: 1800,
-        category: 'Food',
-        label: 'Monthly groceries',
-        date: d(11),
-      },
-
-      {
-        id: 't7',
-        type: 'income',
-        amount: 3200,
-        category: 'Milk Sale',
-        label: 'Weekly milk collection',
-        date: d(14),
-      },
-
-      {
-        id: 't8',
-        type: 'expense',
-        amount: 900,
-        category: 'Other',
-        label: 'Electricity bill',
-        date: d(17),
-      },
     ],
 
     notifications: [
-      {
-        id: 'n1',
-        type: 'alert',
-        message:
-          'Suspicious SMS detected from +91-98XXX — flagged as potential scam.',
-        read: false,
-        ts: '2h ago',
-      },
-
-      {
-        id: 'n2',
-        type: 'tip',
-        message:
-          'Your savings rate improved by 4% this month. Keep going!',
-        read: false,
-        ts: '1d ago',
-      },
-
-      {
-        id: 'n3',
-        type: 'info',
-        message:
-          'Milk sale recorded — ₹3,200 added to income.',
-        read: true,
-        ts: '2d ago',
-      },
     ],
 
     aiMessages: [
-      {
-        role: 'ai',
-        text:
-          'Namaste Ramesh! Aap kaise madad chahte hain aaj?',
-      },
     ],
 
     language: 'Hindi',
@@ -257,34 +166,17 @@ export const useStore = create<Store>(
     // Loans Initial State
     // ─────────────────────────────
     loans: [
-      {
-        id: 'l1',
-        type: 'borrowed',
-        personName: 'Mahesh',
-        amount: 10000,
-        remainingAmount: 6000,
-        interestRate: 5,
-        dueDate: d(-15),
-        status: 'active',
-        date: d(10),
-      },
-
-      {
-        id: 'l2',
-        type: 'lent',
-        personName: 'Suresh',
-        amount: 5000,
-        remainingAmount: 0,
-        interestRate: 0,
-        dueDate: d(2),
-        status: 'paid',
-        date: d(20),
-      },
     ],
 
     // ─────────────────────────────
     // Actions
     // ─────────────────────────────
+    setToken: (t) =>
+      set({ token: t }),
+
+    setUser: (u) =>
+      set({ user: u }),
+
     addTransaction: (t) =>
       set((s) => ({
         transactions: [
@@ -307,6 +199,9 @@ export const useStore = create<Store>(
           ...s.transactions,
         ],
       })),
+
+    setTransactions: (txs) =>
+      set({ transactions: txs }),
 
     removeTransaction: (id) =>
       set((s) => ({

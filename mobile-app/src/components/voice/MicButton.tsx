@@ -6,7 +6,7 @@ import Animated, {
   cancelAnimation, Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Mic } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { C } from '../../constants/colors';
 
 type Props = { listening: boolean; onPress: () => void };
@@ -65,7 +65,7 @@ export function MicButton({ listening, onPress }: Props) {
             shadowOpacity: 0.45, shadowRadius: 16, elevation: 10,
           }}
         >
-          <Mic color={C.white} size={36} strokeWidth={2} />
+          <Feather name="mic" color={C.white} size={36} />
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>

@@ -9,16 +9,19 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useStore } from '../../store';
+import { endpoints } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { C } from '../../constants/colors';
+import type { RtcData } from '../../types';
 
-const FIELDS: { key: keyof NonNullable<ReturnType<typeof useStore>['rtcData']>; label: string }[] = [
-  { key: 'survey',   label: 'Survey Number' },
-  { key: 'owner',    label: 'Owner Name'    },
-  { key: 'village',  label: 'Village'       },
-  { key: 'district', label: 'District'      },
-  { key: 'area',     label: 'Land Area'     },
-  { key: 'crop',     label: 'Crop Type'     },
+const FIELDS: { key: keyof RtcData; label: string }[] = [
+  { key: 'surveyNumber', label: 'Survey Number' },
+  { key: 'ownerName',    label: 'Owner Name'    },
+  { key: 'village',      label: 'Village'       },
+  { key: 'taluk',        label: 'Taluk'         },
+  { key: 'district',     label: 'District'      },
+  { key: 'landArea',     label: 'Land Area'     },
+  { key: 'cropType',     label: 'Crop Type'     },
 ];
 
 function ScanLine_() {
@@ -42,34 +45,96 @@ export default function RtcScreen() {
   const [scanning,  setScanning]  = useState(false);
   const [progress,  setProgress]  = useState(0);
 
-  const simulateScan = () => {
+  // Auto-fetch the user's latest RTC record from the backend on load
+  useEffect(() => {
+    const fetchExisting = async () => {
+      try {
+        const res = await endpoints.getRtcRecords();
+        if (res.data?.data?.length > 0) {
+          const d = res.data.data[0]; // Get the most recent record
+          setRtc({
+            surveyNumber: d.surveyNumber ?? d.survey_number ?? '',
+            ownerName:    d.ownerName    ?? d.owner_name    ?? '',
+            village:      d.village      ?? '',
+            taluk:        d.taluk        ?? '',
+            district:     d.district     ?? '',
+            landArea:     d.landArea     ?? d.land_area     ?? '',
+            cropType:     d.cropType     ?? d.crop_type     ?? '',
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch existing RTC records');
+      }
+    };
+    fetchExisting();
+  }, []);
+
+  const uploadFile = async (uri: string, name: string, mimeType: string) => {
     setScanning(true);
     setProgress(0);
-    const iv = setInterval(() => setProgress((p) => Math.min(100, p + 7)), 100);
-    setTimeout(() => {
+
+    // Animate progress bar while uploading
+    const iv = setInterval(() => setProgress((p) => Math.min(90, p + 5)), 200);
+
+    try {
+      const form = new FormData();
+      form.append('file', {
+        uri,
+        name,
+        type: mimeType,
+      } as any);
+
+      const res = await endpoints.uploadRtc(form);
       clearInterval(iv);
+      setProgress(100);
+
+      // Map backend response to RtcData
+      const d = res.data.data.extractedData || res.data.data;
+      const rtc: RtcData = {
+        surveyNumber: d.surveyNumber ?? d.survey_number ?? '',
+        ownerName:    d.ownerName    ?? d.owner_name    ?? '',
+        village:      d.village      ?? '',
+        taluk:        d.taluk        ?? '',
+        district:     d.district     ?? '',
+        landArea:     d.landArea     ?? d.land_area     ?? '',
+        cropType:     d.cropType     ?? d.crop_type     ?? '',
+      };
+      setRtc(rtc);
+    } catch (err: any) {
+      clearInterval(iv);
+      const msg = err?.response?.data?.message || 'RTC upload failed. Please try again.';
+      Alert.alert('Upload Error', msg);
+    } finally {
       setScanning(false);
-      setRtc({ survey: '123/4A', owner: 'Ramesh Patil', village: 'Sindagi', district: 'Vijayapura', area: '2.5 Acres', crop: 'Sugarcane' });
-    }, 2000);
+    }
   };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed'); return; }
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (!r.canceled) simulateScan();
+    if (!r.canceled && r.assets[0]) {
+      const asset = r.assets[0];
+      await uploadFile(asset.uri, asset.fileName || 'photo.jpg', asset.mimeType || 'image/jpeg');
+    }
   };
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed'); return; }
     const r = await ImagePicker.launchCameraAsync({ quality: 0.9 });
-    if (!r.canceled) simulateScan();
+    if (!r.canceled && r.assets[0]) {
+      const asset = r.assets[0];
+      await uploadFile(asset.uri, asset.fileName || 'camera.jpg', asset.mimeType || 'image/jpeg');
+    }
   };
 
   const pickDoc = async () => {
     const r = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
-    if (!r.canceled) simulateScan();
+    if (!r.canceled && r.assets[0]) {
+      const asset = r.assets[0];
+      await uploadFile(asset.uri, asset.name || 'document.pdf', asset.mimeType || 'application/pdf');
+    }
   };
 
   return (
@@ -192,7 +257,7 @@ export default function RtcScreen() {
                   className={`flex-row justify-between items-center py-2.5 ${i < FIELDS.length - 1 ? 'border-b border-slate-100' : ''}`}
                 >
                   <Text className="text-xs text-slate-500">{label}</Text>
-                  <Text className="text-sm font-semibold text-slate-800">{rtcData[key]}</Text>
+                  <Text className="text-sm font-semibold text-slate-800">{rtcData[key] || '—'}</Text>
                 </View>
               ))}
             </Card>

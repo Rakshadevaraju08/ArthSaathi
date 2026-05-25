@@ -12,6 +12,7 @@ import { MicButton } from '../../components/voice/MicButton';
 import { Waveform } from '../../components/voice/Waveform';
 import { ChatBubble } from '../../components/voice/ChatBubble';
 import { C } from '../../constants/colors';
+import { endpoints } from '../../services/api';
 
 type VS = 'idle' | 'listening' | 'processing' | 'done';
 
@@ -32,11 +33,19 @@ export default function VoiceScreen() {
 
   const [state, setState] = useState<VS>('idle');
 
+  // Map display language to backend language code
+  const getLangCode = () => {
+    const map: Record<string, string> = {
+      Hindi: 'hi', English: 'en', Marathi: 'mr', Tamil: 'ta', Telugu: 'te',
+    };
+    return map[language] || 'en';
+  };
+
   /* ── Demo fallback flow ── */
   const runDemo = () => {
     setState('processing');
     addAiMessage({ role: 'user', text: 'Maine ₹3000 kharcha kiya fertilizer pe' });
-    addTransaction({ type: 'expense', amount: 3000, label: 'Fertilizer (voice)', category: 'Fertilizer' });
+    addTransaction({ type: 'expense', amount: 3000, note: 'Fertilizer (voice)', category: 'Fertilizer' });
     setTimeout(() => {
       addAiMessage({ role: 'ai', text: 'Expense of ₹3,000 added under Fertilizer category. Your monthly expense is now updated. 💡 Tip: bulk buying can save 8–10%.' });
       setState('done');
@@ -55,6 +64,23 @@ export default function VoiceScreen() {
   const handleMic = () => {
     if (state === 'idle') startRec();
     else if (state === 'listening') stopRec();
+  };
+
+  /* ── Quick prompt handler — calls financial-guidance API ── */
+  const handleQuickPrompt = async (prompt: string) => {
+    addAiMessage({ role: 'user', text: prompt });
+    setState('processing');
+    try {
+      const res = await endpoints.financialGuidance(prompt, getLangCode());
+      const { result } = res.data.data;
+      const responseText = result.guidance +
+        (result.tips?.length ? '\n\n💡 Tips:\n' + result.tips.map((t: string) => `• ${t}`).join('\n') : '');
+      addAiMessage({ role: 'ai', text: responseText });
+    } catch {
+      addAiMessage({ role: 'ai', text: `Sure! Let me help you with: "${prompt}". Please provide more details.` });
+    } finally {
+      setState('idle');
+    }
   };
 
   return (
@@ -114,14 +140,7 @@ export default function VoiceScreen() {
             {['Add expense', 'Loan advice', 'Scam alert?'].map((p) => (
               <TouchableOpacity
                 key={p}
-                onPress={() => {
-                  addAiMessage({ role: 'user', text: p });
-                  setState('processing');
-                  setTimeout(() => {
-                    addAiMessage({ role: 'ai', text: `Sure! Let me help you with: "${p}". Please provide more details.` });
-                    setState('idle');
-                  }, 1000);
-                }}
+                onPress={() => handleQuickPrompt(p)}
                 className="px-3.5 py-1.5 rounded-full bg-emerald-50 border-[1.5px] border-emerald-200"
               >
                 <Text className="text-xs font-semibold text-emerald-700">{p}</Text>

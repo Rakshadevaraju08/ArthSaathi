@@ -1,10 +1,7 @@
 from fastapi import FastAPI
 from app.routes.rtc_routes import router as rtc_router
 
-app = FastAPI(
-    title="ArthSaathi AI Service",
-    version="1.0.0"
-)
+app = FastAPI()
 
 @app.get("/")
 def home():

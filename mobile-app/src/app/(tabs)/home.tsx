@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  ScrollView, View, Text, TouchableOpacity, RefreshControl,
+  ScrollView, View, Text, TouchableOpacity, RefreshControl, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,8 +9,8 @@ import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useStore, useTotals } from '../../store';
 import { HealthScoreRing } from '../../components/home/HealthScoreRing';
 import { endpoints } from '../../services/api';
-import { Card } from '../../components/ui/Card';
 import { C } from '../../constants/colors';
+import { useLocation } from '../../hooks/useLocation';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -46,7 +46,12 @@ export default function HomeScreen() {
   const user = useStore((s: any) => s.user);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const locationStr = [user?.village, user?.district].filter(Boolean).join(', ') || 'Location not set';
+  const { location, loading: locationLoading } = useLocation();
+
+  const locationStr = location?.raw
+    ?? [user?.village, user?.district].filter(Boolean).join(', ')
+    ?? (locationLoading ? 'Fetching location…' : null)
+    ?? 'Location not set';
   const displayName = user?.name || 'User';
 
   const fetchTransactions = async () => {
@@ -89,7 +94,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }} edges={['top']}>
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -104,13 +110,12 @@ export default function HomeScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
-            paddingHorizontal: 20,
-            paddingTop: 20,
             paddingBottom: 28,
             borderBottomLeftRadius: 28,
             borderBottomRightRadius: 28,
           }}
         >
+          <SafeAreaView edges={['top']} style={{ paddingHorizontal: 20, paddingTop: 20 }}>
       {/* Header row */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <View>
@@ -157,6 +162,7 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
+          </SafeAreaView>
         </LinearGradient>
 
         {/* ── Stat cards — Kotlin StatCardItem style ── */}
@@ -510,6 +516,6 @@ export default function HomeScreen() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

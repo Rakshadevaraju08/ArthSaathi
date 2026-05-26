@@ -27,9 +27,8 @@ export function useAudioRecorder() {
     try {
       // 3. Configure global audio session permissions for iOS/Android device channels
       await AudioModule.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
 
       const { granted } = await AudioModule.requestRecordingPermissionsAsync();

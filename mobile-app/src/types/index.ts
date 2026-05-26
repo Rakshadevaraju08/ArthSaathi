@@ -1,4 +1,4 @@
-export type Lang = 'Hindi' | 'English' | 'Marathi' | 'Tamil' | 'Telugu';
+export type Lang = 'English' | 'Hindi' | 'Kannada' | 'Marathi' | 'Tamil' | 'Telugu';
 export type TxType = 'income' | 'expense' | 'saving';
 
 export type Transaction = {

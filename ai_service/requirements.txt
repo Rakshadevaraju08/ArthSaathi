@@ -1,5 +1,12 @@
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings==2.7.1
-python-dotenv==1.0.1
+fastapi
+uvicorn
+python-dotenv
+opencv-python
+pytesseract
+numpy
+requests
+pydantic
+sqlalchemy
+psycopg2-binary
+python-multipart
+Pillow

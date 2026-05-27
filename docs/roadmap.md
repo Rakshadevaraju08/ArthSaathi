@@ -2,6 +2,8 @@
 
 AI Powered Rural Financial Intelligence Platform
 
+> Current implementation update: the Expo mobile app is now a local-first prototype using Zustand. Backend, AI service, and database integration are future phases; the current demo does not require remote services.
+
 ---
 
 # Important Note

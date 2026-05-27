@@ -1,113 +1,81 @@
-# ArthSaathi — Frontend Structure
+# ArthSaathi Mobile App
 
-AI Powered Rural Financial Intelligence Platform
+Current status: standalone Expo prototype with local Zustand state. The active mobile UI does not call backend APIs from `src/app`, `src/components`, or `src/store`.
 
----
-
-# Overview
-
-The frontend is a React Native mobile application built using **Expo**, routed via **Expo Router**, styled using **NativeWind v4 (Tailwind CSS)**, and manages global state using **Zustand**. 
-
-The application enforces a voice-first, accessible, and multilingual experience targeting rural users.
-
----
-
-# Technology Stack
+## Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | React Native + Expo |
-| Routing | Expo Router (File-based) |
-| Styling | NativeWind v4 (Tailwind CSS) |
-| State Management | Zustand |
-| Icons | `@expo/vector-icons` (Feather, MaterialIcons, etc.) |
-| Safe Area | `react-native-safe-area-context` |
-| Gradients | `expo-linear-gradient` |
+| App | React Native + Expo |
+| Routing | Expo Router |
+| Styling | NativeWind + React Native styles |
+| State | Zustand local store |
+| Icons | `@expo/vector-icons`, selected `lucide-react-native` icons |
+| UI helpers | `expo-linear-gradient`, `react-native-safe-area-context` |
 
----
+## Active Flow
 
-# Folder Structure
+1. `src/app/index.tsx`
+   - Redirects registered users to `/(tabs)/home`.
+   - Redirects onboarded users to `/login`.
+   - Otherwise redirects to `/onboarding`.
 
-The application source code lives entirely within the `mobile-app/src` directory to keep configurations (`tailwind.config.js`, `babel.config.js`) separate from application logic.
+2. `src/app/onboarding.tsx`
+   - Language selection only.
+   - Entry buttons for `Create new account` and `Login to existing account`.
 
-```txt
-mobile-app/
-│
-├── src/
-│   ├── app/                # Expo Router file-based routing
-│   │   ├── (tabs)/         # Bottom Tab Navigation
-│   │   │   ├── _layout.tsx # Tab bar configuration
-│   │   │   ├── expenses.tsx
-│   │   │   ├── home.tsx
-│   │   │   └── insights.tsx
-│   │   ├── screens/        # Modal and Card presentation screens
-│   │   │   ├── loan.tsx
-│   │   │   ├── rtc.tsx
-│   │   │   └── voice.tsx
-│   │   ├── _layout.tsx     # Root Stack navigation & global providers
-│   │   ├── index.tsx       # Initial redirect
-│   │   └── onboarding.tsx  # First launch experience
-│   │
-│   ├── components/         # Reusable UI building blocks
-│   │   ├── home/           # Dashboard specific widgets
-│   │   ├── ui/             # Generic cards, buttons, bottom sheets
-│   │   ├── voice/          # Voice assistant specific UI (Waveforms)
-│   │   └── MicFAB.tsx      # Floating Action Button for Voice
-│   │
-│   ├── constants/          # Static configuration
-│   │   ├── categories.ts
-│   │   ├── colors.ts
-│   │   └── translations.ts # Multilingual dictionaries
-│   │
-│   ├── hooks/              # Custom React Hooks
-│   │
-│   ├── services/           # External API & Device integrations
-│   │   ├── api.ts          # Axios backend calls
-│   │   ├── tts.ts          # Text-to-Speech logic
-│   │   └── whisper.ts      # Audio recording & STT integration
-│   │
-│   ├── store/              # Zustand global state
-│   │   └── index.ts        # Actions, user data, AI messages, tx history
-│   │
-│   ├── types/              # TypeScript definitions
-│   │   └── index.ts
-│   │
-│   └── global.css          # Tailwind CSS entrypoint
-│
-├── app.json                # Expo configuration
-├── babel.config.js         # Babel & NativeWind setup
-├── metro.config.js         # Metro bundler CSS configuration
-├── tailwind.config.js      # Tailwind theme extensions
-└── package.json
-```
+3. `src/app/(auth)/login.tsx`
+   - Local mock login with mobile number and password.
+   - Seeds the local user state and opens the dashboard.
 
----
+4. `src/app/signup/index.tsx`
+   - Separate signup screen.
+   - Collects full name, mobile number, password, and profession.
+   - Language is inherited from onboarding.
 
-# Navigation Flow
+5. `src/app/signup/details-*.tsx`
+   - Profession-specific question screens.
+   - Each supports `Normal input` and `Voice input`.
+   - Stores answers locally in Zustand and completes registration.
 
-1. **App Launch** (`src/app/index.tsx`) → Instantly redirects to `/onboarding`.
-2. **Onboarding** (`src/app/onboarding.tsx`) → Collects preferred language, explains features, proceeds to Home.
-3. **Main Dashboard** (`src/app/(tabs)/home.tsx`) → Central hub with quick actions, financial health score, and summaries.
-4. **Global Voice** (`src/app/screens/voice.tsx`) → Accessible from anywhere via the `MicFAB`. It overlays the app as a modal.
+6. `src/app/(tabs)/_layout.tsx`
+   - Bottom tabs: Home, Ledger, center Voice FAB, Insights, Profile.
 
----
+## Dashboard Routes
 
-# Styling Rules & Workarounds
+| Route | Purpose |
+|---|---|
+| `/(tabs)/home` | Main dashboard with health score, income/expense/savings, loan card, and profession-specific quick actions |
+| `/(tabs)/ledger` | Dynamic transaction ledger; category inputs change by profession |
+| `/(tabs)/business` | Profession-specific operational dashboard mounted behind quick actions |
+| `/(tabs)/insights` | Local profession-specific insight cards |
+| `/(tabs)/profile` | Account, work profile, language, preferences, and sign out |
+| `/screens/voice` | Local mock voice assistant |
+| `/screens/loan` | Local loan eligibility, risk gauge, EMI analysis |
+| `/screens/rtc` | Local RTC OCR mock |
+| `/screens/scam` | Local fraud warning mock |
 
-1. **NativeWind on Android**: To prevent zero-height collapse, critical root layouts (`SafeAreaProvider`, `ScrollView`) must explicitly include `style={{ flex: 1 }}` alongside Tailwind's `className="flex-1"`.
-2. **Icons**: `lucide-react-native` suffers from Android SVG rendering bugs with NativeWind v4. We explicitly use `@expo/vector-icons` for guaranteed stability.
-3. **System UI**: The Android OS navigation bar is hidden natively via `expo-navigation-bar` inside the root `_layout.tsx` to provide an immersive full-screen experience. 
+## Profession Dashboards
 
----
+`/(tabs)/business` switches on `store.occupation`:
 
-# State Management (Zustand)
+| Occupation | Component | Sections |
+|---|---|---|
+| `FARMER` | `MandiDashboard` | Mandi rates, harvest readiness, RTC status |
+| `SHOP_OWNER` | `UdharBook` | Add Udhar, Udhar Book, Add Stock, Stock Cycle |
+| `TAILOR` | `TailorOrders` | Add Order, Orders Queue, Add Delivery, Delivery Plan |
+| `DAILY_WAGE` | `WageTracker` | Add Shift, Shift Tracker, Add Payment Due, Payment Due |
 
-The `useStore` (`src/store/index.ts`) handles:
-- **User Preferences:** Selected language (`Hindi`, `English`, etc.), Onboarding status.
-- **Financial Data:** Array of transactions (income/expenses). Derived calculations (total income, health score) are abstracted in custom selector hooks like `useTotals()`.
-- **AI Chat State:** Transcript of the current voice session, maintaining context.
-- **Feature Status:** Shared data like `rtcUploaded` and `loanRisk` assessments.
+## Store
 
----
+`src/store/index.ts` contains:
 
-*This document is updated automatically to reflect architectural changes as the hackathon progresses.*
+- Registration fields: name, mobile, password, language, occupation.
+- Step 2 details in `businessDetails`.
+- Control flags: `onboarded`, `isRegistered`, `isLoggedIn`.
+- Local transactions and loans.
+- Actions for registration, custom role details, transactions, loans, and reset.
+
+## Removed/Unused Cleanup
+
+The old static home summary cards and unused generic UI cards were removed after the dashboard became route-driven and profession-specific.

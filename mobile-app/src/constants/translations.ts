@@ -17,6 +17,11 @@ export const TRANSLATIONS: Record<Lang, T> = {
     getStarted: 'Get Started',
     welcome:    'Welcome to ArthSaathi',
   },
+  Kannada: {
+    tagline:    'Voice-first financial assistant',
+    getStarted: 'Get Started',
+    welcome:    'Welcome to ArthSaathi',
+  },
   Marathi: {
     tagline:    'आवाज-आधारित आर्थिक सहाय्यक',
     getStarted: 'सुरू करा',

@@ -12,13 +12,7 @@ export default function RootLayout() {
       if (Platform.OS !== 'android') return;
 
       try {
-        // Hide Android navigation bar
         await NavigationBar.setVisibilityAsync('hidden');
-
-        // Optional immersive mode
-        if (NavigationBar.setBehaviorAsync) {
-          await NavigationBar.setBehaviorAsync('overlay-swipe');
-        }
       } catch (e) {
         console.log('NavigationBar error:', e);
       }
@@ -29,22 +23,29 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider style={{ flex: 1, backgroundColor: '#fff' }}>
-      <StatusBar style="light" translucent />
+      <StatusBar style="light" />
 
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="signup" />
         <Stack.Screen name="(tabs)" />
+
         <Stack.Screen
           name="screens/voice"
           options={{ presentation: 'modal' }}
         />
+
         <Stack.Screen
           name="screens/loan"
           options={{ presentation: 'card' }}
         />
+
         <Stack.Screen
           name="screens/scam"
           options={{ presentation: 'card' }}
         />
+
         <Stack.Screen
           name="screens/rtc"
           options={{ presentation: 'card' }}

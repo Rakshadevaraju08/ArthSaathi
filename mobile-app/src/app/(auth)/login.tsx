@@ -6,9 +6,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { isAxiosError } from 'axios';
 
 import { C } from '../../constants/colors';
-import { useStore } from '../../store';
+import { useStore, type Occupation } from '../../store';
 import { endpoints } from '../../services/api';
 import { setToken } from '../../services/auth';
+
+// Map backend occupation enum values to frontend enum values
+const occupationMap: Record<string, Occupation> = {
+  farmer: 'FARMER',
+  shop_owner: 'SHOP_OWNER',
+  tailor: 'TAILOR',
+  daily_wage_worker: 'DAILY_WAGE',
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,6 +33,7 @@ export default function LoginScreen() {
     try {
       setSubmitting(true);
 
+      // Step 1: Login and get token + basic user
       const response = await endpoints.login(mobileNumber.trim(), password);
       const payload = response.data?.data;
 
@@ -32,68 +41,60 @@ export default function LoginScreen() {
         throw new Error('Invalid login response from server.');
       }
 
+      // Step 2: Save token to secure storage
       await setToken(payload.token);
 
-      // Fetch user profile details immediately
-      let userOccupation = payload.user.occupation || 'farmer';
+      // Step 3: Set token in store first so subsequent API calls are authenticated
+      useStore.setState({ token: payload.token });
+
+      // Step 4: Fetch full profile to get occupation and financial data
+      let occupation: Occupation = 'FARMER';
+      let monthlyIncome = '';
+      let monthlyExpenses = '';
       let businessDetails = {};
 
       try {
-        const profileRes = await endpoints.getMyProfile();
-        const profileData = profileRes.data?.data;
-        if (profileData) {
-          userOccupation = profileData.occupation || userOccupation;
-          if (profileData.farmerProfile) {
-            businessDetails = profileData.farmerProfile;
-          } else if (profileData.shopProfile) {
-            businessDetails = profileData.shopProfile;
-          } else if (profileData.tailorProfile) {
-            businessDetails = profileData.tailorProfile;
-          } else if (profileData.genericProfile) {
-            businessDetails = profileData.genericProfile;
+        const profileRes = await endpoints.getProfile();
+        const profile = profileRes.data?.data;
+
+        if (profile) {
+          if (profile.occupation) {
+            occupation = occupationMap[profile.occupation] ?? 'FARMER';
           }
+          if (profile.monthlyIncome) monthlyIncome = String(profile.monthlyIncome);
+          if (profile.monthlyExpenses) monthlyExpenses = String(profile.monthlyExpenses);
+
+          // Pick the occupation-specific sub-profile
+          const subProfile =
+            profile.farmerProfile ??
+            profile.shopProfile ??
+            profile.tailorProfile ??
+            profile.genericProfile ??
+            {};
+          businessDetails = subProfile;
         }
-      } catch (profileError) {
-        console.warn('Failed to fetch profile details on login:', profileError);
+      } catch {
+        // Profile fetch failed — not a blocking error, continue with defaults
+        console.warn('[Login] Profile fetch failed, using defaults');
       }
 
-      // Map backend occupation string to frontend Occupation type
-      const mapOccupation = (occ: string) => {
-        switch (occ?.toLowerCase()) {
-          case 'farmer':
-            return 'FARMER';
-          case 'shop_owner':
-            return 'SHOP_OWNER';
-          case 'tailor':
-            return 'TAILOR';
-          case 'daily_wage_worker':
-          case 'daily_wage':
-            return 'DAILY_WAGE';
-          default:
-            return 'FARMER';
-        }
-      };
-
-      const mappedOccupation = mapOccupation(userOccupation);
-
-      useStore.setState((state) => ({
-        fullName: payload.user.name,
-        mobileNumber: payload.user.phone,
+      // Step 5: Sync everything to Zustand store
+      useStore.setState({
+        fullName: payload.user.name ?? '',
+        mobileNumber: payload.user.phone ?? '',
         password,
-        preferredLanguage: state.language,
+        preferredLanguage: useStore.getState().language,
+        occupation,
+        monthlyIncome,
+        monthlyExpenses,
         isRegistered: true,
         isLoggedIn: true,
         onboarded: true,
         token: payload.token,
-        user: {
-          ...payload.user,
-          occupation: userOccupation,
-        },
-        occupation: mappedOccupation,
+        user: payload.user,
         businessDetails,
-      }));
+      });
 
-      // Redirect directly to the correct dashboard (business tab screen)
       router.replace('/(tabs)/home');
     } catch (error) {
       const message = isAxiosError(error)

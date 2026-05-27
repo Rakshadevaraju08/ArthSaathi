@@ -1,194 +1,72 @@
 // src/modules/profile/profile.validation.js
-// Validation rules for all occupation-based profile endpoints
+const { body } = require('express-validator');
 
-const { body } = require("express-validator");
-
-// ─────────────────────────────────────────
-// SHARED USER BASE VALIDATION
-// Applied at signup to expand User model fields
-// ─────────────────────────────────────────
-
+// Shared base validations
 const baseProfileValidation = [
-  body("occupation")
-    .notEmpty()
-    .withMessage("Occupation is required.")
-    .isIn(["farmer", "shop_owner", "tailor", "daily_wage_worker"])
-    .withMessage("Invalid occupation type."),
+  body('occupation')
+    .notEmpty().withMessage('Occupation is required.'),
 
-  body("monthlyIncome")
-    .notEmpty()
-    .withMessage("Monthly income is required.")
-    .isFloat({ min: 0 })
-    .withMessage("Monthly income must be a positive number."),
-
-  body("monthlyExpenses")
-    .notEmpty()
-    .withMessage("Monthly expenses are required.")
-    .isFloat({ min: 0 })
-    .withMessage("Monthly expenses must be a positive number."),
-
-  body("repaymentHabit")
+  body('monthlyIncome')
     .optional()
-    .isIn([
-      "always_on_time",
-      "sometimes_late",
-      "often_late",
-      "defaulted",
-      "no_loans_yet",
-    ])
-    .withMessage("Invalid repayment habit value."),
+    .isNumeric().withMessage('Monthly income must be a number.'),
 
-  body("loanHistory")
+  body('monthlyExpenses')
     .optional()
-    .isArray()
-    .withMessage("Loan history must be an array."),
+    .isNumeric().withMessage('Monthly expenses must be a number.'),
 
-  body("loanHistory.*.lender")
+  body('repaymentHabit')
     .optional()
-    .isString()
-    .withMessage("Lender must be a string."),
-
-  body("loanHistory.*.amount")
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Loan amount must be a positive number."),
+    .isIn(['always_on_time', 'sometimes_late', 'often_late', 'defaulted', 'no_loans_yet'])
+    .withMessage('Invalid repayment habit value.'),
 ];
-
-// ─────────────────────────────────────────
-// FARMER PROFILE VALIDATION
-// ─────────────────────────────────────────
 
 const farmerProfileValidation = [
   ...baseProfileValidation,
 
-  body("crops")
-    .notEmpty()
-    .withMessage("At least one crop is required.")
-    .isArray({ min: 1 })
-    .withMessage("Crops must be an array with at least one item."),
-
-  body("crops.*")
-    .isString()
-    .withMessage("Each crop must be a string."),
-
-  body("inputCost")
+  body('crops')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Input cost must be a positive number."),
+    .isArray().withMessage('Crops must be an array.'),
 
-  body("landArea")
+  body('inputCost')
     .optional()
-    .isString()
-    .withMessage("Land area must be a string."),
-
-  body("irrigationType")
-    .optional()
-    .isIn(["rain-fed", "irrigated", "mixed"])
-    .withMessage("Invalid irrigation type."),
-
-  body("rtcVerified")
-    .optional()
-    .isBoolean()
-    .withMessage("rtcVerified must be a boolean."),
-
-  body("rtcRecordId")
-    .optional()
-    .isUUID()
-    .withMessage("rtcRecordId must be a valid UUID."),
+    .isNumeric().withMessage('Input cost must be a number.'),
 ];
-
-// ─────────────────────────────────────────
-// SHOP PROFILE VALIDATION
-// ─────────────────────────────────────────
 
 const shopProfileValidation = [
   ...baseProfileValidation,
 
-  body("shopName")
+  body('investmentAmount')
     .optional()
-    .isString()
-    .withMessage("Shop name must be a string."),
+    .isNumeric().withMessage('Investment amount must be a number.'),
 
-  body("investmentAmount")
+  body('inventoryCycle')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Investment amount must be a positive number."),
-
-  body("supplierCredit")
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Supplier credit must be a positive number."),
-
-  body("inventoryCycle")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Inventory cycle must be a positive integer (days)."),
-
-  body("monthlyRevenue")
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Monthly revenue must be a positive number."),
+    .isNumeric().withMessage('Inventory cycle must be a number.'),
 ];
-
-// ─────────────────────────────────────────
-// TAILOR PROFILE VALIDATION
-// ─────────────────────────────────────────
 
 const tailorProfileValidation = [
   ...baseProfileValidation,
 
-  body("machineryCount")
+  body('machineryCount')
     .optional()
-    .isInt({ min: 0 })
-    .withMessage("Machinery count must be a non-negative integer."),
+    .isNumeric().withMessage('Machinery count must be a number.'),
 
-  body("weeklyStitchCapacity")
+  body('weeklyStitchCapacity')
     .optional()
-    .isInt({ min: 0 })
-    .withMessage("Weekly stitch capacity must be a non-negative integer."),
-
-  body("advanceDeposits")
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Advance deposits must be a positive number."),
-
-  body("workType")
-    .optional()
-    .isIn(["blouse", "full_suit", "alterations", "all"])
-    .withMessage("Invalid work type."),
+    .isNumeric().withMessage('Weekly stitch capacity must be a number.'),
 ];
-
-// ─────────────────────────────────────────
-// GENERIC PROFILE VALIDATION (Daily Wage Worker)
-// ─────────────────────────────────────────
 
 const genericProfileValidation = [
   ...baseProfileValidation,
 
-  body("employmentStability")
+  body('workingDaysPerMonth')
     .optional()
-    .isIn(["stable", "seasonal", "irregular"])
-    .withMessage("Invalid employment stability value."),
+    .isNumeric().withMessage('Working days must be a number.'),
 
-  body("workingDaysPerMonth")
+  body('employmentStability')
     .optional()
-    .isInt({ min: 0, max: 31 })
-    .withMessage("Working days must be between 0 and 31."),
-
-  body("paymentChannel")
-    .optional()
-    .isIn(["cash", "upi", "bank_transfer"])
-    .withMessage("Invalid payment channel."),
-
-  body("employer")
-    .optional()
-    .isString()
-    .withMessage("Employer must be a string."),
-
-  body("workType")
-    .optional()
-    .isIn(["construction", "domestic", "agriculture", "other"])
-    .withMessage("Invalid work type."),
+    .isIn(['stable', 'seasonal', 'irregular'])
+    .withMessage('Invalid employment stability value.'),
 ];
 
 module.exports = {

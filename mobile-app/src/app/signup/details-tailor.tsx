@@ -5,10 +5,16 @@ import { isAxiosError } from 'axios';
 
 import { QuestionScaffold } from '../../components/signup/QuestionScaffold';
 import { useStore, type OnboardingInputMode, type RepaymentHabit } from '../../store';
-import { endpoints } from '../../services/api';
+import { endpoints, LANGUAGE_CODE_MAP } from '../../services/api';
 import { setToken } from '../../services/auth';
 
 const habits: RepaymentHabit[] = ['Never Missed', 'Sometimes Delayed', 'Frequently Missed'];
+
+const repaymentMap: Record<RepaymentHabit, string> = {
+  'Never Missed': 'always_on_time',
+  'Sometimes Delayed': 'sometimes_late',
+  'Frequently Missed': 'often_late',
+};
 
 export default function TailorDetails() {
   const router = useRouter();
@@ -29,29 +35,36 @@ export default function TailorDetails() {
     try {
       setSubmitting(true);
       const state = useStore.getState();
-      const languageMap = {
-        English: 'en',
-        Hindi: 'hi',
-        Kannada: 'kn',
-        Marathi: 'mr',
-        Tamil: 'ta',
-        Telugu: 'te',
-      } as const;
 
-      const response = await endpoints.register({
+      // Step 1: Register user account
+      const registerResponse = await endpoints.register({
         name: state.fullName.trim(),
         phone: state.mobileNumber.trim(),
         password: state.password,
-        language: languageMap[state.preferredLanguage] ?? 'en',
+        language: LANGUAGE_CODE_MAP[state.preferredLanguage] ?? 'en',
       });
 
-      const payload = response.data?.data;
+      const payload = registerResponse.data?.data;
       if (!payload?.token || !payload?.user) {
         throw new Error('Invalid registration response from server.');
       }
 
+      // Step 2: Save token immediately
       await setToken(payload.token);
+      useStore.setState({ token: payload.token });
 
+      // Step 3: Create tailor profile on backend
+      await endpoints.createTailorProfile({
+        occupation: 'tailor',
+        monthlyIncome,
+        monthlyExpenses,
+        machineryCount: machineCount,
+        weeklyStitchCapacity: weeklyCapacity,
+        repaymentHabit: repaymentMap[habit],
+        hasActiveLoans,
+      });
+
+      // Step 4: Sync to Zustand store
       useStore.setState({
         monthlyIncome,
         monthlyExpenses,
@@ -60,9 +73,11 @@ export default function TailorDetails() {
         onboardingInputMode: mode,
         token: payload.token,
         user: payload.user,
+        occupation: 'TAILOR',
       });
       useStore.getState().setCustomRoleDetails({ machineCount, weeklyCapacity });
       useStore.getState().completeRegistration();
+
       router.replace('/(tabs)/home');
     } catch (error) {
       const message = isAxiosError(error)

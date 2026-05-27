@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   ScrollView,
   Switch,
   Text,
@@ -14,6 +15,7 @@ import { BellRing, ChevronRight, Fingerprint, Shield, Type } from 'lucide-react-
 
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { removeToken } from '../../services/auth';
 import type { Lang } from '../../types';
 
 const LANGS: { code: Lang; native: string }[] = [
@@ -63,8 +65,21 @@ export default function ProfileScreen() {
     .toUpperCase();
 
   const handleLogout = () => {
-    resetGlobalDataState();
-    router.replace('/onboarding');
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          // Remove JWT from SecureStore
+          await removeToken();
+          // Reset all Zustand state
+          resetGlobalDataState();
+          // Navigate back to onboarding
+          router.replace('/onboarding');
+        },
+      },
+    ]);
   };
 
   return (
@@ -74,13 +89,7 @@ export default function ProfileScreen() {
           colors={[C.emerald600, C.teal600]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            borderRadius: 20,
-            padding: 18,
-            paddingBottom: 20,
-          }}
+          style={{ marginHorizontal: 16, marginTop: 16, borderRadius: 20, padding: 18, paddingBottom: 20 }}
         >
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
@@ -92,17 +101,10 @@ export default function ProfileScreen() {
                 <Text className="text-white text-xs font-black">{roleLabel[occupation]}</Text>
               </View>
             </View>
-
             <View className="items-center">
               <View
                 className="w-20 h-20 rounded-3xl bg-white items-center justify-center"
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.16,
-                  shadowRadius: 10,
-                  elevation: 6,
-                }}
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.16, shadowRadius: 10, elevation: 6 }}
               >
                 <Text className="text-2xl font-black text-emerald-600">{initials}</Text>
               </View>
@@ -183,7 +185,12 @@ export default function ProfileScreen() {
               <View key={row.key} className={`flex-row items-center px-4 py-3 ${index < TOGGLES.length - 1 ? 'border-b border-slate-100' : ''}`}>
                 <row.Icon size={16} color={C.slate500} />
                 <Text className="flex-1 text-sm text-slate-700 font-medium ml-3">{row.label}</Text>
-                <Switch value={toggles[row.key]} onValueChange={() => toggle(row.key)} trackColor={{ false: C.slate200, true: C.emerald500 }} thumbColor={C.white} />
+                <Switch
+                  value={toggles[row.key]}
+                  onValueChange={() => toggle(row.key)}
+                  trackColor={{ false: C.slate200, true: C.emerald500 }}
+                  thumbColor={C.white}
+                />
               </View>
             ))}
           </View>
@@ -201,7 +208,7 @@ export default function ProfileScreen() {
             <Text className="text-sm font-bold text-rose-600">Sign Out</Text>
           </TouchableOpacity>
 
-          <Text className="text-center text-[11px] text-slate-500 mt-3 mb-2">Version 1.0.4 - Local Prototype</Text>
+          <Text className="text-center text-[11px] text-slate-500 mt-3 mb-2">ArthSaathi v1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

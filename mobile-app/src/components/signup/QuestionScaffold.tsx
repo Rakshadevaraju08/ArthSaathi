@@ -31,6 +31,8 @@ type Props = {
   voiceSummary: string;
   onVoiceFill: () => void;
   onSubmit: () => void;
+  submitLabel?: string;
+  submitDisabled?: boolean;
 };
 
 export function QuestionScaffold({
@@ -43,6 +45,8 @@ export function QuestionScaffold({
   voiceSummary,
   onVoiceFill,
   onSubmit,
+  submitLabel = 'Forward to dashboard',
+  submitDisabled = false,
 }: Props) {
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
@@ -130,8 +134,12 @@ export function QuestionScaffold({
             </View>
           ))}
 
-          <TouchableOpacity onPress={onSubmit} className="bg-emerald-600 rounded-2xl py-4 items-center mt-2">
-            <Text className="text-white text-base font-black">Forward to dashboard</Text>
+          <TouchableOpacity
+            onPress={onSubmit}
+            disabled={submitDisabled}
+            className={`rounded-2xl py-4 items-center mt-2 ${submitDisabled ? 'bg-emerald-400' : 'bg-emerald-600'}`}
+          >
+            <Text className="text-white text-base font-black">{submitLabel}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

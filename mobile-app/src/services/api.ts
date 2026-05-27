@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import Constants from 'expo-constants';
 import { getToken } from './auth';
 
 // ─────────────────────────────────────────
@@ -6,8 +7,22 @@ import { getToken } from './auth';
 // ─────────────────────────────────────────
 // REPLACE '192.168.1.X' WITH YOUR COMPUTER'S ACTUAL IPv4 ADDRESS!
 // localhost will NOT work on a physical device.
-const BASE  = process.env.EXPO_PUBLIC_API_URL   ?? 'http://192.168.29.9:3000';
-const VOICE = process.env.EXPO_PUBLIC_VOICE_URL ?? 'http://192.168.29.9:8001';
+const envApiUrl = process.env.EXPO_PUBLIC_API_URL;
+const envVoiceUrl = process.env.EXPO_PUBLIC_VOICE_URL;
+
+const expoHost =
+  Constants.expoConfig?.hostUri?.split(':')[0] ||
+  (Constants as any)?.manifest2?.extra?.expoGo?.debuggerHost?.split(':')[0] ||
+  null;
+
+const fallbackApi = expoHost ? `http://${expoHost}:3000/api` : 'http://192.168.29.9:3000/api';
+const fallbackVoice = expoHost ? `http://${expoHost}:8001/api` : 'http://192.168.29.9:8001/api';
+
+const BASE = envApiUrl ?? fallbackApi;
+const VOICE = envVoiceUrl ?? fallbackVoice;
+
+console.log('[API][BOOT] Resolved API baseURL:', BASE);
+console.log('[API][BOOT] Resolved Voice baseURL:', VOICE);
 
 // ─────────────────────────────────────────
 // Axios instances
@@ -23,6 +38,14 @@ export const voiceApi: AxiosInstance = axios.create({
   timeout: 20000,
 });
 
+const redact = (data: any) => {
+  if (!data || typeof data !== 'object') return data;
+  const cloned = { ...data };
+  if ('password' in cloned) cloned.password = '[REDACTED]';
+  if ('token' in cloned) cloned.token = '[REDACTED]';
+  return cloned;
+};
+
 // ─────────────────────────────────────────
 // Auth interceptor — attach JWT to every request
 // ─────────────────────────────────────────
@@ -31,8 +54,54 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('[API][REQ]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`, {
+    params: config.params,
+    data: redact(config.data),
+  });
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => {
+    console.log(
+      '[API][RES]',
+      response.status,
+      `${response.config.baseURL}${response.config.url}`,
+      redact(response.data)
+    );
+    return response;
+  },
+  (error) => {
+    console.log(
+      '[API][ERR]',
+      error?.response?.status ?? 'NO_RESPONSE',
+      error?.config ? `${error.config.baseURL}${error.config.url}` : 'unknown-url',
+      redact(error?.response?.data ?? error?.message)
+    );
+    return Promise.reject(error);
+  }
+);
+
+voiceApi.interceptors.request.use((config) => {
+  console.log('[VOICE][REQ]', config.method?.toUpperCase(), `${config.baseURL}${config.url}`);
+  return config;
+});
+
+voiceApi.interceptors.response.use(
+  (response) => {
+    console.log('[VOICE][RES]', response.status, `${response.config.baseURL}${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.log(
+      '[VOICE][ERR]',
+      error?.response?.status ?? 'NO_RESPONSE',
+      error?.config ? `${error.config.baseURL}${error.config.url}` : 'unknown-url',
+      error?.response?.data ?? error?.message
+    );
+    return Promise.reject(error);
+  }
+);
 
 // ─────────────────────────────────────────
 // Response unwrapper — returns `data` from
@@ -56,18 +125,18 @@ export const endpoints = {
     language?: string;
     village?: string;
     district?: string;
-  }) => api.post('/api/auth/register', body),
+  }) => api.post('/auth/register', body),
 
   login: (phone: string, password: string, village?: string, district?: string) =>
-    api.post('/api/auth/login', { phone, password, village, district }),
+    api.post('/auth/login', { phone, password, village, district }),
 
-  getMe: () => api.get('/api/auth/me'),
+  getMe: () => api.get('/auth/me'),
 
   // ── User ────────────────────────────────
-  getProfile: () => api.get('/api/users/profile'),
+  getProfile: () => api.get('/users/profile'),
 
   updateProfile: (body: Record<string, any>) =>
-    api.put('/api/users/profile', body),
+    api.put('/users/profile', body),
 
   // ── Transactions ────────────────────────
   getTransactions: (params?: {
@@ -75,7 +144,7 @@ export const endpoints = {
     category?: string;
     startDate?: string;
     endDate?: string;
-  }) => api.get('/api/transactions', { params }),
+  }) => api.get('/transactions', { params }),
 
   addTransaction: (body: {
     amount: number;
@@ -83,40 +152,40 @@ export const endpoints = {
     category: string;
     note?: string;
     date?: string;
-  }) => api.post('/api/transactions', body),
+  }) => api.post('/transactions', body),
 
   getTransaction: (id: string) =>
-    api.get(`/api/transactions/${id}`),
+    api.get(`/transactions/${id}`),
 
   updateTransaction: (id: string, body: Record<string, any>) =>
-    api.put(`/api/transactions/${id}`, body),
+    api.put(`/transactions/${id}`, body),
 
   deleteTransaction: (id: string) =>
-    api.delete(`/api/transactions/${id}`),
+    api.delete(`/transactions/${id}`),
 
   // ── Dashboard ───────────────────────────
-  getDashboard: () => api.get('/api/dashboard'),
+  getDashboard: () => api.get('/dashboard'),
 
   // ── AI ──────────────────────────────────
   financialGuidance: (query: string, language: string) =>
-    api.post('/api/ai/financial-guidance', { query, language }),
+    api.post('/ai/financial-guidance', { query, language }),
 
   scamDetection: (message: string) =>
-    api.post('/api/ai/scam-detection', { message }),
+    api.post('/ai/scam-detection', { message }),
 
   loanAnalysis: (body: {
     loanAmount: number;
     interestRate: number;
     tenureMonths: number;
     monthlyIncome: number;
-  }) => api.post('/api/ai/loan-analysis', body),
+  }) => api.post('/ai/loan-analysis', body),
 
   // ── RTC ─────────────────────────────────
   uploadRtc: (form: FormData) =>
-    api.post('/api/rtc/upload', form, {
+    api.post('/rtc/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 30000,   // OCR can be slow
     }),
 
-  getRtcRecords: () => api.get('/api/rtc'),
+  getRtcRecords: () => api.get('/rtc'),
 };

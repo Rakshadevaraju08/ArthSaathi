@@ -8,6 +8,7 @@ const prisma = require("./src/config/db");
 const logger = require("./src/utils/logger");
 
 const PORT = environment.port;
+const HOST = process.env.HOST || "0.0.0.0";
 
 const startServer = async () => {
   try {
@@ -16,8 +17,9 @@ const startServer = async () => {
     logger.info("✅ Database connected successfully.");
 
     // Start HTTP server
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, HOST, () => {
       logger.info(`🚀 ArthSaathi backend running on port ${PORT}`);
+      logger.info(`🌐 Listening on http://${HOST}:${PORT}`);
       logger.info(`📡 Environment: ${environment.nodeEnv}`);
       logger.info(`🤖 AI Service URL: ${environment.ai.serviceUrl}`);
     });

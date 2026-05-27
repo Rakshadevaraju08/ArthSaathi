@@ -3,39 +3,57 @@ import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { isAxiosError } from 'axios';
 
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { endpoints } from '../../services/api';
+import { setToken } from '../../services/auth';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const login = () => {
-    if (mobileNumber.trim().length < 10 || password.length < 4) {
-      Alert.alert('Check login', 'Enter mobile number and password.');
+  const login = async () => {
+    if (mobileNumber.trim().length !== 10 || password.length < 6) {
+      Alert.alert('Check login', 'Enter valid 10 digit mobile number and at least 6 character password.');
       return;
     }
 
-    useStore.setState((state) => ({
-      fullName: state.fullName || 'Ramesh Patil',
-      mobileNumber: mobileNumber.trim(),
-      password,
-      preferredLanguage: state.language,
-      monthlyIncome: state.monthlyIncome || '28000',
-      monthlyExpenses: state.monthlyExpenses || '16500',
-      isRegistered: true,
-      isLoggedIn: true,
-      onboarded: true,
-      user: {
-        id: 'local-login',
-        name: state.fullName || 'Ramesh Patil',
-        phone: mobileNumber.trim(),
-        language: state.language,
-      },
-    }));
-    router.replace('/(tabs)/home');
+    try {
+      setSubmitting(true);
+
+      const response = await endpoints.login(mobileNumber.trim(), password);
+      const payload = response.data?.data;
+
+      if (!payload?.token || !payload?.user) {
+        throw new Error('Invalid login response from server.');
+      }
+
+      await setToken(payload.token);
+
+      useStore.setState((state) => ({
+        fullName: payload.user.name,
+        mobileNumber: payload.user.phone,
+        password,
+        preferredLanguage: state.language,
+        isRegistered: true,
+        isLoggedIn: true,
+        onboarded: true,
+        token: payload.token,
+        user: payload.user,
+      }));
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      const message = isAxiosError(error)
+        ? error.response?.data?.message || 'Login failed. Please check phone/password.'
+        : 'Login failed. Please try again.';
+      Alert.alert('Login failed', message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,8 +93,12 @@ export default function LoginScreen() {
           className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-5"
         />
 
-        <TouchableOpacity onPress={login} className="bg-emerald-600 rounded-2xl py-4 items-center">
-          <Text className="text-white text-base font-black">Login</Text>
+        <TouchableOpacity
+          onPress={login}
+          disabled={submitting}
+          className={`rounded-2xl py-4 items-center ${submitting ? 'bg-emerald-400' : 'bg-emerald-600'}`}
+        >
+          <Text className="text-white text-base font-black">{submitting ? 'Logging in...' : 'Login'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace('/signup')} className="py-4 items-center">

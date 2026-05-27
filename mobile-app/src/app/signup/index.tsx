@@ -33,8 +33,8 @@ export default function SignupScreen() {
   const preferredLanguage = useStore((s) => s.language);
 
   const submit = () => {
-    if (!fullName.trim() || mobileNumber.trim().length < 10 || password.length < 4) {
-      Alert.alert('Check signup details', 'Enter name, 10 digit mobile number and at least 4 characters password.');
+    if (!fullName.trim() || mobileNumber.trim().length !== 10 || password.length < 6) {
+      Alert.alert('Check signup details', 'Enter name, 10 digit mobile number and at least 6 characters password.');
       return;
     }
 

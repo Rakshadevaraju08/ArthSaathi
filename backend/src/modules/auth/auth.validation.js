@@ -24,11 +24,6 @@ const registerValidation = [
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters."),
 
-  body("email")
-    .optional()
-    .isEmail()
-    .withMessage("Please provide a valid email address."),
-
   body("language")
     .optional()
     .isIn(["en", "hi", "kn", "te", "ta", "mr"])

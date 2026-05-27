@@ -9,12 +9,11 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
  */
 const register = async (req, res, next) => {
   try {
-    const { name, phone, email, password, language, village, district } = req.body;
+    const { name, phone, password, language, village, district } = req.body;
 
     const result = await authService.register({
       name,
       phone,
-      email,
       password,
       language,
       village,

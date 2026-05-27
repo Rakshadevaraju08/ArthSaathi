@@ -55,7 +55,6 @@ Register a new user.
   "name": "Ramesh Kumar",
   "phone": "9876543210",
   "password": "securepass123",
-  "email": "ramesh@example.com",
   "language": "kn",
   "village": "Hosur",
   "district": "Tumkur"
@@ -72,7 +71,6 @@ Register a new user.
       "id": "uuid",
       "name": "Ramesh Kumar",
       "phone": "9876543210",
-      "email": "ramesh@example.com",
       "language": "kn",
       "village": "Hosur",
       "district": "Tumkur",
@@ -153,7 +151,6 @@ Get user profile.
     "id": "uuid",
     "name": "Ramesh Kumar",
     "phone": "9876543210",
-    "email": "ramesh@example.com",
     "language": "kn",
     "village": "Hosur",
     "district": "Tumkur"

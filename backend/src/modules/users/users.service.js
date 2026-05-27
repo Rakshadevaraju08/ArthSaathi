@@ -13,7 +13,6 @@ const getUserById = async (userId) => {
       id: true,
       name: true,
       phone: true,
-      email: true,
       language: true,
       village: true,
       district: true,
@@ -34,7 +33,7 @@ const getUserById = async (userId) => {
  * Update user profile
  */
 const updateUser = async (userId, updateData) => {
-  const allowedFields = ["name", "email", "language", "village", "district"];
+  const allowedFields = ["name", "language", "village", "district"];
   const filteredData = {};
 
   allowedFields.forEach((field) => {
@@ -50,7 +49,6 @@ const updateUser = async (userId, updateData) => {
       id: true,
       name: true,
       phone: true,
-      email: true,
       language: true,
       village: true,
       district: true,

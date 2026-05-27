@@ -9,7 +9,7 @@ const environment = require("../../config/environment");
 /**
  * Register a new user
  */
-const register = async ({ name, phone, email, password, language, village, district }) => {
+const register = async ({ name, phone, password, language, village, district }) => {
   // Check if phone already registered
   const existingUser = await prisma.user.findUnique({ where: { phone } });
   if (existingUser) {
@@ -26,7 +26,6 @@ const register = async ({ name, phone, email, password, language, village, distr
     data: {
       name,
       phone,
-      email: email || null,
       password: hashedPassword,
       language: language || "en",
       village: village || null,
@@ -36,7 +35,6 @@ const register = async ({ name, phone, email, password, language, village, distr
       id: true,
       name: true,
       phone: true,
-      email: true,
       language: true,
       village: true,
       district: true,

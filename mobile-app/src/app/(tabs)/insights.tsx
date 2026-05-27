@@ -1,66 +1,101 @@
 import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { InsightCard } from '../../components/ui/InsightCard';
-import { C } from '../../constants/colors';
 
-const INSIGHTS = [
-  { emoji: '📉', title: 'Save on Fertilizer',  desc: 'Reduce fertilizer spend by 10% → save ₹300/month. Bulk buying cooperative in your area.' },
-  { emoji: '💰', title: 'Boost Savings Rate',   desc: 'Your savings rate is 23% — target 30% for better loan eligibility and emergency buffer.' },
-  { emoji: '🥛', title: 'Dairy Expansion',      desc: 'Milk income is consistent — consider a dairy expansion loan at 8.5% PM-KISAN rate.' },
-  { emoji: '🛡️', title: 'Digital Safety',       desc: '3 months without scam incidents — great record! Keep verifying all unknown callers.' },
-  { emoji: '🌾', title: 'Govt Scheme Match',    desc: 'You qualify for PM-KISAN ₹2,000 next installment on Oct 15. Verify on pmkisan.gov.in.' },
-];
+import { C } from '../../constants/colors';
+import { useStore } from '../../store';
+
+const baseInsights = {
+  FARMER: [
+    ['Mandi price timing', 'Growth', 'Tomato and onion rates are trending higher in the local mock market. Consider splitting sales across two mandi days.'],
+    ['Input cost watch', 'Savings', 'Seed and fertilizer spending is above baseline. Keep separate receipts in Ledger this week.'],
+    ['RTC readiness', 'Scheme', 'Your simulated RTC scan is ready for loan and scheme checks.'],
+  ],
+  SHOP_OWNER: [
+    ['Udhar collection', 'Alert', 'Three customer balances can be followed up before weekly supplier payment day.'],
+    ['Inventory cycle', 'Growth', 'Fast moving goods should be restocked weekly to protect cash rotation.'],
+    ['Supplier credit', 'Savings', 'Supplier credit is active. Keep repayment date visible in Ledger.'],
+  ],
+  TAILOR: [
+    ['Delivery queue', 'Alert', 'Prioritize urgent alteration orders before new stitching work.'],
+    ['Cloth yield', 'Savings', 'Batch similar garment cuts to reduce cloth waste this week.'],
+    ['Capacity plan', 'Growth', 'Keep 20 percent weekly capacity free for walk-in orders.'],
+  ],
+  DAILY_WAGE: [
+    ['Shift target', 'Goal', 'You are tracking toward a full work month. Add missed-payment notes in Ledger.'],
+    ['Cash safety', 'Safety', 'Split cash income into home expense and saving buckets on payment day.'],
+    ['Employer stability', 'Growth', 'Same-employer work gives better repayment confidence for local loan estimates.'],
+  ],
+};
+
+const TAG_COLOR: Record<string, string> = {
+  Savings: C.emerald500,
+  Goal: C.blue500,
+  Alert: C.rose500,
+  Safety: C.amber500,
+  Growth: C.teal600,
+  Scheme: '#64748b',
+};
 
 export default function InsightsScreen() {
   const router = useRouter();
+  const occupation = useStore((s) => s.occupation);
+  const insights = baseInsights[occupation];
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']} style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      <View className="flex-row items-center justify-between px-4 py-3.5 bg-white border-b border-slate-100">
-        <View>
-          <Text className="text-base font-bold text-slate-800">Smart Insights</Text>
-          <Text className="text-xs text-slate-500">Personalized by AI</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/screens/voice')}>
-          <LinearGradient
-            colors={[C.emerald500, C.teal600]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 99 }}
-          >
-            <Feather name="mic" size={14} color={C.white} />
-            <Text className="text-white text-xs font-semibold">Ask AI</Text>
-          </LinearGradient>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }} edges={['top']}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 18, backgroundColor: '#fff' }}>
+        <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>Smart Insights</Text>
+        <TouchableOpacity onPress={() => router.push('/screens/voice')} style={{ backgroundColor: '#ecfdf5', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 }}>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: C.emerald600 }}>Ask AI</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 120 }} showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-        {INSIGHTS.map((ins, i) => (
-          <View key={ins.title}>
-            <InsightCard emoji={ins.emoji} title={ins.title} desc={ins.desc} />
-          </View>
-        ))}
-
-        {/* AI prompt CTA */}
-        <View>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/screens/voice')}>
-            <LinearGradient
-              colors={[C.emerald600, C.teal600]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 20, padding: 20, marginTop: 4 }}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        {insights.map(([title, tag, desc]) => {
+          const color = TAG_COLOR[tag] ?? '#64748b';
+          return (
+            <View
+              key={title}
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 16,
+                marginTop: 12,
+                flexDirection: 'row',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 6,
+                elevation: 2,
+                overflow: 'hidden',
+              }}
             >
-              <Text className="text-white text-base font-bold">Want deeper analysis?</Text>
-              <Text className="text-white/80 text-xs mt-1.5 leading-5">
-                Speak to ArthSaathi in Hindi or Kannada for personalized financial guidance
-              </Text>
-              <View className="mt-3 self-start bg-white/20 rounded-xl px-3 py-2 border border-white/30">
-                <Text className="text-white text-sm font-semibold">Start Voice Session →</Text>
+              <View style={{ width: 6, backgroundColor: color }} />
+              <View style={{ flex: 1, padding: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '900', color: '#1e293b', flex: 1 }} numberOfLines={1}>{title}</Text>
+                  <View style={{ marginLeft: 8, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: `${color}1A` }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color }}>{tag}</Text>
+                  </View>
+                </View>
+                <Text style={{ fontSize: 12, color: '#475569', lineHeight: 16 }}>{desc}</Text>
               </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+            </View>
+          );
+        })}
+
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/screens/voice')} style={{ marginTop: 18, marginBottom: 18 }}>
+          <View style={{ backgroundColor: C.emerald600, borderRadius: 16, padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>Want deeper financial analysis?</Text>
+            <Text style={{ color: '#ecfdf5', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+              Use ArthSaathi Voice Assistant from the center mic button.
+            </Text>
+            <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 8 }}>
+              <Text style={{ color: C.emerald600, fontWeight: 'bold', fontSize: 13 }}>Start Voice Assistant</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

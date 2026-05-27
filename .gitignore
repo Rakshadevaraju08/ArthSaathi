@@ -26,6 +26,7 @@ mobile-app/.expo/
 mobile-app/dist/
 mobile-app/web-build/
 mobile-app/.expo-shared/
+.expo/
 
 # Expo
 mobile-app/expo-env.d.ts

@@ -17,6 +17,7 @@ export const C = {
   rose500:    '#f43f5e',
   rose600:    '#e11d48',
   rose700:    '#be123c',
+  red500:     '#ef4444',
   amber50:    '#fffbeb',
   amber400:   '#fbbf24',
   amber500:   '#f59e0b',

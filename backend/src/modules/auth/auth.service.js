@@ -53,7 +53,7 @@ const register = async ({ name, phone, email, password, language, village, distr
 /**
  * Login an existing user
  */
-const login = async ({ phone, password }) => {
+const login = async ({ phone, password, village, district }) => {
   // Find user by phone
   const user = await prisma.user.findUnique({ where: { phone } });
 
@@ -71,11 +71,23 @@ const login = async ({ phone, password }) => {
     throw error;
   }
 
+  // Update location if provided
+  let updatedUser = user;
+  if (village || district) {
+    updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        ...(village && { village }),
+        ...(district && { district }),
+      },
+    });
+  }
+
   // Generate JWT
-  const token = generateToken(user.id);
+  const token = generateToken(updatedUser.id);
 
   // Return user without password
-  const { password: _, ...userWithoutPassword } = user;
+  const { password: _, ...userWithoutPassword } = updatedUser;
 
   return { user: userWithoutPassword, token };
 };

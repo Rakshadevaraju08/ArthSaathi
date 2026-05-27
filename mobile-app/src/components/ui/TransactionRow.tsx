@@ -21,7 +21,7 @@ export function TransactionRow({ tx, onPress }: Props) {
         <Text className="text-lg">{emoji}</Text>
       </View>
       <View className="flex-1 min-w-0">
-        <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>{tx.label}</Text>
+        <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>{tx.note}</Text>
         <Text className="text-[11px] text-slate-400 mt-0.5">{tx.category} · {tx.date}</Text>
       </View>
       <Text className={`text-sm font-bold ${isInc ? 'text-emerald-600' : 'text-rose-600'}`}>

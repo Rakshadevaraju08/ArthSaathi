@@ -1,58 +1,36 @@
-# ArthSaathi — Setup Guide
+# ArthSaathi Setup Guide
 
-AI Powered Rural Financial Intelligence Platform
+## Mobile App
 
----
-
-# Mobile App (Frontend) Setup
-
-This guide covers the setup and execution of the React Native Expo mobile application.
-
-## Prerequisites
-- **Node.js**: v18 or higher.
-- **npm**: v8 or higher.
-- **Expo Go**: Download the "Expo Go" app on your iOS or Android device to scan and test the app.
-
-## 1. Installation
-
-Navigate to the frontend directory and install the necessary dependencies:
+The current app is a standalone Expo prototype.
 
 ```bash
 cd mobile-app
 npm install
-```
-
-## 2. Running the App
-
-Start the Expo development server. **Always use the `-c` flag** to clear the Metro bundler cache. This is critical to ensure NativeWind v4 (Tailwind CSS) processes your styling correctly and avoids blank screens:
-
-```bash
 npx expo start -c
 ```
 
-Once the server starts:
-- **Android**: Open the **Expo Go** app and scan the QR code.
-- **iOS**: Open the default **Camera** app and scan the QR code.
+Open the app with Expo Go or an Android emulator.
 
-## 3. Known Expo Go Limitations & Workarounds
+## Current Test Flow
 
-During the hackathon, we are using Expo Go for rapid iteration. Please be aware of the following implementations:
+1. Open the app.
+2. Choose language on onboarding.
+3. Create account or login.
+4. If creating account, choose profession.
+5. Answer profession questions with normal input or simulated voice input.
+6. Use Home, Ledger, Voice, Insights, and Profile tabs.
 
-- **Blank Screens**: If the app loads to a white screen on Android, it is usually a cached NativeWind CSS issue. Stop the server (`Ctrl + C`) and restart with `npx expo start -c`.
-- **Immersive Navigation Bar**: Hiding the Android system navigation bar (`expo-navigation-bar`) throws a safe, silent warning in Expo Go, but works flawlessly in a production APK.
-- **Native Audio (`expo-av`)**: Native microphone access can occasionally crash standard Expo Go builds. A dummy conversation flow is implemented in `voice.tsx` to safely mock the voice assistant.
-- **Icons**: We strictly use `@expo/vector-icons` because `lucide-react-native` SVGs occasionally collapse to zero width/height on Android devices when combined with NativeWind v4.
+## Notes
 
-## 4. Building Natively (For Full Hardware Access)
+- The active mobile app is local-first and uses Zustand.
+- Backend and AI services are not required to run the current prototype.
+- `npx` on this Windows environment may print a PowerShell permission warning, but TypeScript and Expo commands can still complete successfully.
+- For Android visual issues, restart Metro with `npx expo start -c`.
 
-To test native hardware modules (like the actual `expo-av` microphone recording without the mock fallback), you must build a custom development app instead of using Expo Go.
-
-Connect your Android phone via USB (with USB Debugging enabled) or start an Android Studio Emulator, then run:
+## Verification
 
 ```bash
-npx expo run:android
+cd mobile-app
+npx tsc --noEmit
 ```
-
----
-
-*This guide will be updated with Backend, Database, and AI Service setup instructions as those modules are completed.*

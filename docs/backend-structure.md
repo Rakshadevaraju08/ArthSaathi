@@ -1,49 +1,34 @@
-arthsaathi-backend/
-├── .env
-├── .gitignore
-├── package.json
-├── server.js
-├── app.js
+# Backend Structure
+
+Current status: backend code exists in the repository, but the active mobile prototype is local-first and does not require the backend to run.
+
+Future backend integration should preserve the current mobile flow:
+
+```txt
+Onboarding language
+  -> Login / Signup
+  -> Profession questions
+  -> Local dashboard UX
+```
+
+Expected backend modules for future work:
+
+```txt
+backend/
+├── src/
+│   ├── modules/
+│   │   ├── auth/
+│   │   ├── users/
+│   │   ├── transactions/
+│   │   ├── dashboard/
+│   │   ├── rtc/
+│   │   └── ai/
+│   ├── middleware/
+│   ├── routes/
+│   ├── app.ts
+│   └── server.ts
 ├── prisma/
-│   └── schema.prisma
-└── src/
-    ├── config/
-    │   ├── db.js
-    │   └── environment.js
-    ├── middlewares/
-    │   ├── auth.middleware.js
-    │   ├── error.middleware.js
-    │   ├── logger.middleware.js
-    │   └── validate.middleware.js
-    ├── utils/
-    │   ├── logger.js
-    │   └── apiResponse.js
-    ├── routes/
-    │   └── index.js
-    └── modules/
-        ├── auth/
-        │   ├── auth.controller.js
-        │   ├── auth.routes.js
-        │   ├── auth.service.js
-        │   └── auth.validation.js
-        ├── users/
-        │   ├── users.controller.js
-        │   ├── users.routes.js
-        │   └── users.service.js
-        ├── transactions/
-        │   ├── transactions.controller.js
-        │   ├── transactions.routes.js
-        │   └── transactions.service.js
-        ├── dashboard/
-        │   ├── dashboard.controller.js
-        │   ├── dashboard.routes.js
-        │   └── dashboard.service.js
-        ├── rtc/
-        │   ├── rtc.controller.js
-        │   ├── rtc.routes.js
-        │   └── rtc.service.js
-        └── ai/
-            ├── ai.controller.js
-            ├── ai.routes.js
-            ├── ai.service.js
-            └── ai.validation.js
+└── package.json
+```
+
+When backend APIs are reconnected, replace local Zustand mutations gradually rather than changing the screen flow.

@@ -134,6 +134,10 @@ export default function SignupScreen() {
           <TouchableOpacity onPress={submit} className="bg-emerald-600 rounded-2xl py-4 items-center mt-2">
             <Text className="text-white text-base font-black">Register</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.replace('/login')} className="py-4 items-center">
+            <Text className="text-emerald-700 font-black">Already have an account? Login</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

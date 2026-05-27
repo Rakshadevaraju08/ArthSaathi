@@ -3,6 +3,7 @@ import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
 
 import { RiskGauge } from '../../components/ui/RiskGauge';
 import { C } from '../../constants/colors';
@@ -29,6 +30,7 @@ export default function LoanScreen() {
 
   const [amount, setAmount] = useState(String(Math.max(10000, Math.round(monthlyIncome * 3))));
   const [months, setMonths] = useState('12');
+  const [expectedInterest, setExpectedInterest] = useState(12);
   const [purpose, setPurpose] = useState('Working capital');
   const [result, setResult] = useState<null | { emi: number; total: number; risk: LoanRisk; eligible: number }>(null);
 
@@ -45,7 +47,7 @@ export default function LoanScreen() {
       Alert.alert('Check loan details', 'Enter loan amount and tenure.');
       return;
     }
-    const monthlyRate = 0.12 / 12;
+    const monthlyRate = (expectedInterest / 100) / 12;
     const emi = principal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
     const burden = monthlyIncome ? emi / monthlyIncome : 1;
     const risk: LoanRisk = burden > 0.45 || pastRepaymentHabit === 'Frequently Missed'
@@ -100,6 +102,35 @@ export default function LoanScreen() {
               placeholderTextColor="#94a3b8"
               className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-3"
             />
+            
+            {/* The Interest Rate Dragger UI */}
+            <View className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3">
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={{ fontSize: 14, color: '#64748b', fontWeight: '600' }}>
+                  Expected Interest Rate
+                </Text>
+                <Text style={{ fontSize: 16, color: '#0f172a', fontWeight: '900' }}>
+                  {expectedInterest}%
+                </Text>
+              </View>
+
+              <Slider
+                style={{ width: '100%', height: 40 }}
+                minimumValue={1}
+                maximumValue={36}
+                step={0.5}
+                value={expectedInterest}
+                onValueChange={(val) => setExpectedInterest(val)}
+                minimumTrackTintColor="#10b981"
+                maximumTrackTintColor="#cbd5e1"
+                thumbTintColor="#059669"
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+                <Text style={{ fontSize: 10, color: '#94a3b8' }}>1%</Text>
+                <Text style={{ fontSize: 10, color: '#94a3b8' }}>36%</Text>
+              </View>
+            </View>
+
             <TextInput
               value={purpose}
               onChangeText={setPurpose}

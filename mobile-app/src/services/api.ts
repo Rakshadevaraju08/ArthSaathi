@@ -132,6 +132,8 @@ export const endpoints = {
 
   getMe: () => api.get('/auth/me'),
 
+  getMyProfile: () => api.get('/profile/me'),
+
   // ── User ────────────────────────────────
   getProfile: () => api.get('/users/profile'),
 

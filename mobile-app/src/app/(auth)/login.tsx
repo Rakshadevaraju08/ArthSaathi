@@ -34,6 +34,48 @@ export default function LoginScreen() {
 
       await setToken(payload.token);
 
+      // Fetch user profile details immediately
+      let userOccupation = payload.user.occupation || 'farmer';
+      let businessDetails = {};
+
+      try {
+        const profileRes = await endpoints.getMyProfile();
+        const profileData = profileRes.data?.data;
+        if (profileData) {
+          userOccupation = profileData.occupation || userOccupation;
+          if (profileData.farmerProfile) {
+            businessDetails = profileData.farmerProfile;
+          } else if (profileData.shopProfile) {
+            businessDetails = profileData.shopProfile;
+          } else if (profileData.tailorProfile) {
+            businessDetails = profileData.tailorProfile;
+          } else if (profileData.genericProfile) {
+            businessDetails = profileData.genericProfile;
+          }
+        }
+      } catch (profileError) {
+        console.warn('Failed to fetch profile details on login:', profileError);
+      }
+
+      // Map backend occupation string to frontend Occupation type
+      const mapOccupation = (occ: string) => {
+        switch (occ?.toLowerCase()) {
+          case 'farmer':
+            return 'FARMER';
+          case 'shop_owner':
+            return 'SHOP_OWNER';
+          case 'tailor':
+            return 'TAILOR';
+          case 'daily_wage_worker':
+          case 'daily_wage':
+            return 'DAILY_WAGE';
+          default:
+            return 'FARMER';
+        }
+      };
+
+      const mappedOccupation = mapOccupation(userOccupation);
+
       useStore.setState((state) => ({
         fullName: payload.user.name,
         mobileNumber: payload.user.phone,
@@ -43,8 +85,15 @@ export default function LoginScreen() {
         isLoggedIn: true,
         onboarded: true,
         token: payload.token,
-        user: payload.user,
+        user: {
+          ...payload.user,
+          occupation: userOccupation,
+        },
+        occupation: mappedOccupation,
+        businessDetails,
       }));
+
+      // Redirect directly to the correct dashboard (business tab screen)
       router.replace('/(tabs)/home');
     } catch (error) {
       const message = isAxiosError(error)

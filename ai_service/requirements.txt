@@ -1,5 +1,11 @@
 fastapi
 uvicorn
+
+openai
+python-multipart
+pydantic
+pydantic-settings
+
 python-dotenv
 opencv-python
 pytesseract
@@ -10,3 +16,4 @@ sqlalchemy
 psycopg2-binary
 python-multipart
 Pillow
+

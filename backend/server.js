@@ -1,6 +1,7 @@
 // server.js
 // Entry point — starts HTTP server and connects to DB
 
+require("dotenv").config();
 const app = require("./app");
 const environment = require("./src/config/environment");
 const prisma = require("./src/config/db");

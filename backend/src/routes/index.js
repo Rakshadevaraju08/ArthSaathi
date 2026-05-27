@@ -11,6 +11,10 @@ const dashboardRoutes = require("../modules/dashboard/dashboard.routes");
 const aiRoutes = require("../modules/ai/ai.routes");
 const rtcRoutes = require("../modules/rtc/rtc.routes");
 
+const profileRoutes = require("../modules/profile/profile.routes");
+const chatRoutes = require("../modules/chat/chat.routes"); // (added in Task 3)
+
+
 // Health check
 router.get("/health", (req, res) => {
   res.status(200).json({
@@ -28,5 +32,10 @@ router.use("/transactions", transactionsRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/ai", aiRoutes);
 router.use("/rtc", rtcRoutes);
+
+// ── ADD THESE LINES ──
+router.use("/profile", profileRoutes);
+router.use("/chat", chatRoutes); // (added in Task 3)
+
 
 module.exports = router;

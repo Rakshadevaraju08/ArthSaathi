@@ -11,47 +11,8 @@ datasource db {
 }
 
 // ─────────────────────────────────────────
-// USER MODEL
+// ENUMS
 // ─────────────────────────────────────────
-model User {
-  id            String        @id @default(uuid())
-  name          String
-  phone         String        @unique
-  email         String?       @unique
-  password      String
-  language      String        @default("en") // preferred language (e.g., en, kn, hi)
-  village       String?
-  district      String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  transactions Transaction[]
-  aiReports    AIReport[]
-  rtcRecords   RTCRecord[]
-
-  @@map("users")
-}
-
-// ─────────────────────────────────────────
-// TRANSACTION MODEL
-// ─────────────────────────────────────────
-model Transaction {
-  id        String          @id @default(uuid())
-  userId    String
-  amount    Float
-  type      TransactionType // income | expense | saving
-  category  String          // Farming, Loan, Groceries, etc.
-  note      String?
-  date      DateTime        @default(now())
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("transactions")
-}
 
 enum TransactionType {
   income
@@ -59,34 +20,110 @@ enum TransactionType {
   saving
 }
 
+enum ReportType {
+  financial_guidance
+  scam_detection
+  loan_analysis
+  chat_response
+}
+
+enum OccupationType {
+  farmer
+  shop_owner
+  tailor
+  daily_wage_worker
+}
+
+enum RepaymentHabit {
+  always_on_time
+  sometimes_late
+  often_late
+  defaulted
+  no_loans_yet
+}
+
+// ─────────────────────────────────────────
+// USER MODEL
+// ─────────────────────────────────────────
+
+model User {
+  id              String          @id @default(uuid())
+  name            String
+  phone           String          @unique
+  email           String?         @unique
+  password        String
+  language        String          @default("en")
+  village         String?
+  district        String?
+
+  // Occupation & Financial Profile
+  occupation      OccupationType?
+  monthlyIncome   Float?
+  monthlyExpenses Float?
+
+  // Loan History (stored as structured JSON array)
+  // Each entry: { lender, amount, purpose, startDate, endDate, status }
+  loanHistory     Json?
+
+  // Repayment History
+  repaymentHabit  RepaymentHabit?
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  transactions    Transaction[]
+  aiReports       AIReport[]
+  rtcRecords      RTCRecord[]
+  chatMessages    ChatMessage[]
+  farmerProfile   FarmerProfile?
+  shopProfile     ShopProfile?
+  tailorProfile   TailorProfile?
+  genericProfile  GenericProfile?
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// TRANSACTION MODEL
+// ─────────────────────────────────────────
+
+model Transaction {
+  id        String          @id @default(uuid())
+  userId    String
+  amount    Float
+  type      TransactionType
+  category  String
+  note      String?
+  date      DateTime        @default(now())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
 // ─────────────────────────────────────────
 // AI REPORT MODEL
 // ─────────────────────────────────────────
+
 model AIReport {
   id           String     @id @default(uuid())
   userId       String
-  reportType   ReportType // financial_guidance | scam_detection | loan_analysis
-  inputData    Json       // what was sent to AI
-  aiResponse   Json       // what AI returned
+  reportType   ReportType
+  inputData    Json
+  aiResponse   Json
   createdAt    DateTime   @default(now())
 
-  // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ai_reports")
 }
 
-enum ReportType {
-  financial_guidance
-  scam_detection
-  loan_analysis
-}
-
 // ─────────────────────────────────────────
 // RTC RECORD MODEL
 // ─────────────────────────────────────────
-// Only showing the updated RTCRecord model
-// Replace the existing RTCRecord model in your schema.prisma with this:
 
 model RTCRecord {
   id           String   @id @default(uuid())
@@ -98,12 +135,110 @@ model RTCRecord {
   village      String?
   taluk        String?
   district     String?
-  rawOCRData   Json?    // full raw response from OCR — no file data, just text fields
+  rawOCRData   Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("rtc_records")
+}
+
+// ─────────────────────────────────────────
+// CHAT MESSAGE MODEL
+// ─────────────────────────────────────────
+
+model ChatMessage {
+  id           String      @id @default(uuid())
+  userId       String
+  role         String      // "user" | "assistant"
+  content      String
+  language     String?
+  inputType    String      @default("text") // "text" | "voice"
+  intent       String?     // detected intent: expense_tracking | loan_query | scam_check | general
+  createdAt    DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+// ─────────────────────────────────────────
+// FARMER PROFILE MODEL
+// ─────────────────────────────────────────
+
+model FarmerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  crops           String[] // e.g. ["rice", "sugarcane"]
+  inputCost       Float?   // monthly input cost in INR
+  landArea        String?  // from RTC or self-reported
+  irrigationType  String?  // rain-fed | irrigated | mixed
+  rtcVerified     Boolean  @default(false)
+  rtcRecordId     String?  // optional link to RTCRecord
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("farmer_profiles")
+}
+
+// ─────────────────────────────────────────
+// SHOP PROFILE MODEL
+// ─────────────────────────────────────────
+
+model ShopProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  shopName          String?
+  investmentAmount  Float?   // total capital invested
+  supplierCredit    Float?   // credit available from suppliers in INR
+  inventoryCycle    Int?     // restocking cycle in days
+  monthlyRevenue    Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("shop_profiles")
+}
+
+// ─────────────────────────────────────────
+// TAILOR PROFILE MODEL
+// ─────────────────────────────────────────
+
+model TailorProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  machineryCount        Int?
+  weeklyStitchCapacity  Int?     // garments per week
+  advanceDeposits       Float?   // typical advance received in INR
+  workType              String?  // blouse | full_suit | alterations | all
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tailor_profiles")
+}
+
+// ─────────────────────────────────────────
+// GENERIC PROFILE MODEL (Daily Wage Worker)
+// ─────────────────────────────────────────
+
+model GenericProfile {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  employmentStability  String?  // stable | seasonal | irregular
+  workingDaysPerMonth  Int?
+  paymentChannel       String?  // cash | upi | bank_transfer
+  employer             String?
+  workType             String?  // construction | domestic | agriculture | other
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("generic_profiles")
 }

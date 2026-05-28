@@ -42,6 +42,20 @@ const login = async (req, res, next) => {
 };
 
 /**
+ * POST /api/auth/logout
+ * Returns a success response. (For stateless JWTs, local token deletion is enough).
+ */
+const logout = async (req, res, next) => {
+  try {
+    // If you implement a Redis token blacklist later, you would add the token here.
+    // For standard stateless JWTs, a simple 200 OK is all that's required.
+    return sendSuccess(res, "Logged out successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /api/auth/me
  * Returns the currently authenticated user
  */
@@ -53,4 +67,4 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, logout, getMe };

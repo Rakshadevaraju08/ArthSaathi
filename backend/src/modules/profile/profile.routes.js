@@ -9,6 +9,7 @@ const {
   shopProfileValidation,
   tailorProfileValidation,
   genericProfileValidation,
+  updateProfileValidation,
 } = require("./profile.validation");
 const validate = require("../../middlewares/validate.middleware");
 const authMiddleware = require("../../middlewares/auth.middleware");
@@ -18,6 +19,14 @@ router.use(authMiddleware);
 
 // GET /api/profile/me
 router.get("/me", profileController.getMyProfile);
+
+// PUT /api/profile/me
+router.put(
+  "/me",
+  updateProfileValidation,
+  validate,
+  profileController.updateMyProfile
+);
 
 // POST /api/profile/farmer
 router.post(

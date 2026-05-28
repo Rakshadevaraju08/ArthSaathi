@@ -35,23 +35,17 @@ export default function LoginScreen() {
       await setToken(payload.token);
 
       // Fetch user profile details immediately
-      let userOccupation = payload.user.occupation || 'farmer';
-      let businessDetails = {};
+      let userOccupation = payload.user.occupation;
 
       try {
         const profileRes = await endpoints.getMyProfile();
         const profileData = profileRes.data?.data;
         if (profileData) {
           userOccupation = profileData.occupation || userOccupation;
-          if (profileData.farmerProfile) {
-            businessDetails = profileData.farmerProfile;
-          } else if (profileData.shopProfile) {
-            businessDetails = profileData.shopProfile;
-          } else if (profileData.tailorProfile) {
-            businessDetails = profileData.tailorProfile;
-          } else if (profileData.genericProfile) {
-            businessDetails = profileData.genericProfile;
-          }
+          if (profileData.farmerProfile) userOccupation = 'farmer';
+          else if (profileData.shopProfile) userOccupation = 'shop_owner';
+          else if (profileData.tailorProfile) userOccupation = 'tailor';
+          else if (profileData.genericProfile) userOccupation = 'daily_wage';
         }
       } catch (profileError) {
         console.warn('Failed to fetch profile details on login:', profileError);
@@ -74,12 +68,9 @@ export default function LoginScreen() {
         }
       };
 
-      const mappedOccupation = mapOccupation(userOccupation);
+      const mappedOccupation = mapOccupation(userOccupation || 'farmer');
 
       useStore.setState((state) => ({
-        fullName: payload.user.name,
-        mobileNumber: payload.user.phone,
-        password,
         preferredLanguage: state.language,
         isRegistered: true,
         isLoggedIn: true,
@@ -90,7 +81,6 @@ export default function LoginScreen() {
           occupation: userOccupation,
         },
         occupation: mappedOccupation,
-        businessDetails,
       }));
 
       // Redirect directly to the correct dashboard (business tab screen)

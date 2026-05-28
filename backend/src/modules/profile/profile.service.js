@@ -270,10 +270,67 @@ const getProfileByUserId = async (userId) => {
   return user;
 };
 
+// ─────────────────────────────────────────
+// UPDATE MY PROFILE
+// ─────────────────────────────────────────
+
+const updateProfile = async (userId, body) => {
+  const { name, phone, language, monthlyIncome, monthlyExpenses, businessDetails, preferences } = body;
+  const dataToUpdate = {};
+
+  if (name !== undefined) dataToUpdate.name = name;
+  if (phone !== undefined) dataToUpdate.phone = phone;
+  if (language !== undefined) dataToUpdate.language = language;
+  if (monthlyIncome !== undefined) dataToUpdate.monthlyIncome = parseFloat(monthlyIncome);
+  if (monthlyExpenses !== undefined) dataToUpdate.monthlyExpenses = parseFloat(monthlyExpenses);
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: dataToUpdate,
+    select: {
+      id: true, name: true, phone: true, language: true,
+      occupation: true, monthlyIncome: true, monthlyExpenses: true,
+    },
+  });
+
+  // Handle nested business details if provided
+  if (businessDetails && Object.keys(businessDetails).length > 0) {
+    const occ = user.occupation?.toLowerCase();
+    const safeData = { ...businessDetails };
+
+    // Cast numeric fields appropriately
+    const floatFields = ['investmentAmount', 'supplierCredit', 'monthlyRevenue', 'advanceDeposits', 'inputCost'];
+    const intFields = ['inventoryCycle', 'machineryCount', 'weeklyStitchCapacity', 'workingDaysPerMonth'];
+
+    for (const key of Object.keys(safeData)) {
+      if (floatFields.includes(key)) safeData[key] = parseFloat(safeData[key]) || null;
+      if (intFields.includes(key)) safeData[key] = parseInt(safeData[key], 10) || null;
+    }
+
+    try {
+      if (occ === 'farmer') {
+        await prisma.farmerProfile.update({ where: { userId }, data: safeData });
+      } else if (occ === 'shop_owner') {
+        await prisma.shopProfile.update({ where: { userId }, data: safeData });
+      } else if (occ === 'tailor') {
+        await prisma.tailorProfile.update({ where: { userId }, data: safeData });
+      } else if (occ === 'daily_wage_worker' || occ === 'daily_wage') {
+        await prisma.genericProfile.update({ where: { userId }, data: safeData });
+      }
+    } catch (error) {
+      console.warn("Failed to update nested business profile", error);
+    }
+  }
+
+  return getProfileByUserId(userId);
+};
+
+
 module.exports = {
   createFarmerProfile,
   createShopProfile,
   createTailorProfile,
   createGenericProfile,
   getProfileByUserId,
+  updateProfile,
 };

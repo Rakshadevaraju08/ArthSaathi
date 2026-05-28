@@ -15,18 +15,12 @@ export type Occupation = 'FARMER' | 'SHOP_OWNER' | 'TAILOR' | 'DAILY_WAGE';
 export type RepaymentHabit = 'Never Missed' | 'Sometimes Delayed' | 'Frequently Missed';
 export type OnboardingInputMode = 'TEXT' | 'VOICE';
 
-export type BusinessDetails = Record<string, unknown>;
-
 export type PrimaryRegistrationData = {
   fullName: string;
   mobileNumber: string;
   password: string;
   preferredLanguage: Lang;
   occupation: Occupation;
-  monthlyIncome: string;
-  monthlyExpenses: string;
-  hasActiveLoans: boolean;
-  pastRepaymentHabit: RepaymentHabit;
 };
 
 export type Loan = {
@@ -56,7 +50,6 @@ type Store = PrimaryRegistrationData & {
   isLoggedIn: boolean;
   isRegistered: boolean;
   loans: Loan[];
-  businessDetails: BusinessDetails;
   onboardingInputMode: OnboardingInputMode;
 
   setToken: (t: string | null) => void;
@@ -77,7 +70,6 @@ type Store = PrimaryRegistrationData & {
   removeLoan: (id: string) => void;
 
   setPrimaryRegistration: (data: PrimaryRegistrationData) => void;
-  setCustomRoleDetails: (details: BusinessDetails) => void;
   completeRegistration: () => void;
   resetGlobalDataState: () => void;
 };
@@ -88,10 +80,6 @@ const defaultRegistration: PrimaryRegistrationData = {
   password: '',
   preferredLanguage: 'English',
   occupation: 'FARMER',
-  monthlyIncome: '',
-  monthlyExpenses: '',
-  hasActiveLoans: false,
-  pastRepaymentHabit: 'Never Missed',
 };
 
 export const useStore = create<Store>((set) => ({
@@ -127,7 +115,6 @@ export const useStore = create<Store>((set) => ({
   isLoggedIn: false,
   isRegistered: false,
   loans: [],
-  businessDetails: {},
   onboardingInputMode: 'TEXT',
 
   setToken: (t) => set({ token: t }),
@@ -178,7 +165,6 @@ export const useStore = create<Store>((set) => ({
         language: data.preferredLanguage,
       },
     }),
-  setCustomRoleDetails: (details) => set({ businessDetails: details }),
   completeRegistration: () =>
     set({ isRegistered: true, isLoggedIn: true, onboarded: true }),
   resetGlobalDataState: () =>
@@ -187,7 +173,6 @@ export const useStore = create<Store>((set) => ({
       token: null,
       user: null,
       language: 'English',
-      businessDetails: {},
       isRegistered: false,
       isLoggedIn: false,
       onboarded: false,

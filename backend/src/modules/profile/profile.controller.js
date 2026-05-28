@@ -74,10 +74,25 @@ const getMyProfile = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/profile/me
+ */
+const updateMyProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await profileService.updateProfile(userId, req.body);
+    return sendSuccess(res, "Profile updated successfully.", result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 module.exports = {
   createFarmerProfile,
   createShopProfile,
   createTailorProfile,
   createGenericProfile,
   getMyProfile,
+  updateMyProfile,
 };

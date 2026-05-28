@@ -8,7 +8,14 @@ import { useStore, type OnboardingInputMode, type RepaymentHabit } from '../../s
 import { endpoints } from '../../services/api';
 import { setToken } from '../../services/auth';
 
+const langMap: Record<string, string> = { English: 'en', Hindi: 'hi', Kannada: 'kn', Marathi: 'mr', Tamil: 'ta', Telugu: 'te' };
 const habits: RepaymentHabit[] = ['Never Missed', 'Sometimes Delayed', 'Frequently Missed'];
+
+const repaymentMap: Record<RepaymentHabit, string> = {
+  'Never Missed': 'always_on_time',
+  'Sometimes Delayed': 'sometimes_late',
+  'Frequently Missed': 'often_late',
+};
 
 export default function ShopDetails() {
   const router = useRouter();
@@ -30,45 +37,54 @@ export default function ShopDetails() {
     try {
       setSubmitting(true);
       const state = useStore.getState();
-      const languageMap = {
-        English: 'en',
-        Hindi: 'hi',
-        Kannada: 'kn',
-        Marathi: 'mr',
-        Tamil: 'ta',
-        Telugu: 'te',
-      } as const;
 
-      const response = await endpoints.register({
+      // Step 1: Register the user account
+      const registerResponse = await endpoints.register({
         name: state.fullName.trim(),
         phone: state.mobileNumber.trim(),
         password: state.password,
-        language: languageMap[state.preferredLanguage] ?? 'en',
+        language: langMap[state.preferredLanguage] || 'en',
+        village: 'Not specified',
+        district: 'Not specified',
       });
 
-      const payload = response.data?.data;
+      const payload = registerResponse.data?.data;
       if (!payload?.token || !payload?.user) {
         throw new Error('Invalid registration response from server.');
       }
 
+      // Step 2: Save token immediately
       await setToken(payload.token);
+      useStore.setState({ token: payload.token });
 
-      useStore.setState({
+      // Step 3: Create shop profile on the backend
+      await endpoints.createShopProfile({
+        occupation: 'shop_owner',
         monthlyIncome,
         monthlyExpenses,
+        investmentAmount: capitalInvestment,
+        supplierCredit: supplierCredit ? '1' : '0',
+        inventoryCycle: inventoryCycle === 'Weekly' ? '7' : '30',
+        repaymentHabit: repaymentMap[habit],
         hasActiveLoans,
-        pastRepaymentHabit: habit,
+      });
+
+      // Step 4: Sync to Zustand store
+      useStore.setState({
         onboardingInputMode: mode,
         token: payload.token,
         user: payload.user,
+        occupation: 'SHOP_OWNER',
       });
-      useStore.getState().setCustomRoleDetails({ capitalInvestment, supplierCredit, inventoryCycle });
       useStore.getState().completeRegistration();
+
       router.replace('/(tabs)/home');
     } catch (error) {
+      console.error('Shop Signup Error:', isAxiosError(error) ? error.response?.data : error);
+
       const message = isAxiosError(error)
-        ? error.response?.data?.message || 'Signup failed. Please try again.'
-        : 'Signup failed. Please try again.';
+        ? error.response?.data?.message || JSON.stringify(error.response?.data?.errors) || 'Signup failed.'
+        : error instanceof Error ? error.message : 'Signup failed. Please try again.';
       Alert.alert('Registration failed', message);
     } finally {
       setSubmitting(false);

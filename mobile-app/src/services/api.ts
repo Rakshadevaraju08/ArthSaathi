@@ -130,6 +130,8 @@ export const endpoints = {
   login: (phone: string, password: string, village?: string, district?: string) =>
     api.post('/auth/login', { phone, password, village, district }),
 
+  logout: () => api.post('/auth/logout'),
+
   getMe: () => api.get('/auth/me'),
 
   getMyProfile: () => api.get('/profile/me'),
@@ -138,7 +140,12 @@ export const endpoints = {
   getProfile: () => api.get('/users/profile'),
 
   updateProfile: (body: Record<string, any>) =>
-    api.put('/users/profile', body),
+    api.put('/profile/me', body),
+
+  createFarmerProfile: (data: any) => api.post('/profile/farmer', data),
+  createShopProfile: (data: any) => api.post('/profile/shop', data),
+  createTailorProfile: (data: any) => api.post('/profile/tailor', data),
+  createGenericProfile: (data: any) => api.post('/profile/generic', data),
 
   // ── Transactions ────────────────────────
   getTransactions: (params?: {

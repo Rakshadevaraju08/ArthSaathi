@@ -191,9 +191,39 @@ const genericProfileValidation = [
     .withMessage("Invalid work type."),
 ];
 
+// ─────────────────────────────────────────
+// UPDATE PROFILE VALIDATION
+// ─────────────────────────────────────────
+
+const updateProfileValidation = [
+  body("name").optional().isString().withMessage("Name must be a string."),
+  body("phone").optional().isString().withMessage("Phone must be a string."),
+  body("language")
+    .optional()
+    .isIn(["en", "hi", "kn", "te", "ta", "mr"])
+    .withMessage("Unsupported language code."),
+  body("monthlyIncome")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Monthly income must be a positive number."),
+  body("monthlyExpenses")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Monthly expenses must be a positive number."),
+  body("businessDetails")
+    .optional()
+    .isObject()
+    .withMessage("Business details must be an object."),
+  body("preferences")
+    .optional()
+    .isObject()
+    .withMessage("Preferences must be an object."),
+];
+
 module.exports = {
   farmerProfileValidation,
   shopProfileValidation,
   tailorProfileValidation,
   genericProfileValidation,
+  updateProfileValidation,
 };

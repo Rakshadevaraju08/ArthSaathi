@@ -14,6 +14,9 @@ router.post("/register", registerValidation, validate, authController.register);
 // POST /api/auth/login
 router.post("/login", loginValidation, validate, authController.login);
 
+// POST /api/auth/logout
+router.post("/logout", authController.logout);
+
 // GET /api/auth/me  (protected)
 router.get("/me", authMiddleware, authController.getMe);
 

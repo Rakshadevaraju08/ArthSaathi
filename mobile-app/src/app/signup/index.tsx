@@ -44,10 +44,6 @@ export default function SignupScreen() {
       password,
       preferredLanguage,
       occupation,
-      monthlyIncome: '',
-      monthlyExpenses: '',
-      hasActiveLoans: false,
-      pastRepaymentHabit: 'Never Missed',
     });
 
     const route =

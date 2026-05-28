@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { useRouter } from 'expo-router';
 
 import { RiskGauge } from '../../components/ui/RiskGauge';
 import { C } from '../../constants/colors';
@@ -20,6 +21,7 @@ const purposeOptions = {
 };
 
 export default function LoanScreen() {
+  const router = useRouter();
   const monthlyIncome = Number(useStore((s) => s.monthlyIncome || 0));
   const monthlyExpenses = Number(useStore((s) => s.monthlyExpenses || 0));
   const hasActiveLoans = useStore((s) => s.hasActiveLoans);
@@ -56,8 +58,31 @@ export default function LoanScreen() {
         ? 'moderate'
         : 'safe';
 
+    // Compute ArthScore (0-1000): savings rate + repayment habit + burden
+    const savingsRate = monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0;
+    const habitBonus = pastRepaymentHabit === 'Never Missed' ? 200 : pastRepaymentHabit === 'Sometimes Delayed' ? 80 : 0;
+    const burdenPenalty = Math.round(burden * 300);
+    const rawScore = Math.round(400 + savingsRate * 250 + habitBonus - burdenPenalty);
+    const arthScore = Math.max(300, Math.min(950, rawScore));
+
     setLoanRisk(risk);
     setResult({ emi: Math.round(emi), total: Math.round(emi * tenure), risk, eligible });
+
+    // Navigate to ArthScore result screen
+    router.push({
+      pathname: '/screens/loan-result',
+      params: {
+        score: String(arthScore),
+        emi: String(Math.round(emi)),
+        total: String(Math.round(emi * tenure)),
+        eligible: String(eligible),
+        tenure: String(tenure),
+        interest: String(expectedInterest),
+        income: String(monthlyIncome),
+        risk,
+        purpose,
+      },
+    });
   };
 
   const riskColor = loanRisk === 'safe' ? C.emerald600 : loanRisk === 'moderate' ? C.amber600 : C.rose600;

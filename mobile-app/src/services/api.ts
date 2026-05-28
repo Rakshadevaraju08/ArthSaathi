@@ -209,10 +209,11 @@ export const endpoints = {
     api.post('/ai/scam-detection', { message }),
 
   loanAnalysis: (body: {
-    loanAmount: number;
-    interestRate: number;
+    requestedLoanAmount: number;
+    expectedInterestRate: number;
     tenureMonths: number;
-    monthlyIncome: number;
+    loanPurpose: string;
+    collateralValue?: number | null;
   }) => api.post('/ai/loan-analysis', body),
 
   // ── RTC ─────────────────────────────────

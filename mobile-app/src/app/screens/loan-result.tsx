@@ -137,20 +137,60 @@ export default function LoanResultScreen() {
   const risk = (params.risk ?? 'safe') as 'safe' | 'moderate' | 'high';
   const purpose = params.purpose ?? 'Working capital';
 
+  // Parse dynamic arrays passed as stringified JSON params
+  let parsedPositiveFactors: string[] = [];
+  let parsedNegativeFactors: string[] = [];
+  let parsedRiskFactors: string[] = [];
+  let parsedProducts: any[] = [];
+
+  try {
+    if (params.positiveFactors) parsedPositiveFactors = JSON.parse(params.positiveFactors as string);
+  } catch (e) {
+    console.warn('Failed to parse positiveFactors', e);
+  }
+
+  try {
+    if (params.negativeFactors) parsedNegativeFactors = JSON.parse(params.negativeFactors as string);
+  } catch (e) {
+    console.warn('Failed to parse negativeFactors', e);
+  }
+
+  try {
+    if (params.riskFactors) parsedRiskFactors = JSON.parse(params.riskFactors as string);
+  } catch (e) {
+    console.warn('Failed to parse riskFactors', e);
+  }
+
+  try {
+    if (params.recommendedProducts) parsedProducts = JSON.parse(params.recommendedProducts as string);
+  } catch (e) {
+    console.warn('Failed to parse recommendedProducts', e);
+  }
+
+  // Assemble dynamic or static fallback scoreFactors
+  const scoreFactors =
+    parsedPositiveFactors.length > 0 || parsedNegativeFactors.length > 0
+      ? [
+          ...parsedPositiveFactors.map((label) => ({ ok: true, label })),
+          ...parsedNegativeFactors.map((label) => ({ ok: false, label })),
+        ]
+      : [
+          { ok: true, label: t.regularTransactionsRecorded },
+          { ok: true, label: t.noExistingDefaults },
+          { ok: true, label: t.landCollateralAvailable },
+          { ok: true, label: t.appHistorySixMonths },
+          { ok: false, label: t.irregularIncomePastMonths },
+          { ok: false, label: t.highExpenseRatio },
+        ];
+
+  const riskFactorsList =
+    parsedRiskFactors.length > 0
+      ? parsedRiskFactors
+      : [t.seasonalIncomeThreeMonths, t.noFormalCreditHistory];
+
   const riskLabel = risk === 'safe' ? t.lowRiskBorrower : risk === 'moderate' ? t.moderateRiskBorrower : t.highRiskBorrower;
   const riskColor = risk === 'safe' ? C.emerald600 : risk === 'moderate' ? C.amber600 : C.rose600;
   const riskBg = risk === 'safe' ? C.emerald50 : risk === 'moderate' ? '#fffbeb' : '#fff1f2';
-
-  const scoreFactors = [
-    { ok: true, label: t.regularTransactionsRecorded },
-    { ok: true, label: t.noExistingDefaults },
-    { ok: true, label: t.landCollateralAvailable },
-    { ok: true, label: t.appHistorySixMonths },
-    { ok: false, label: t.irregularIncomePastMonths },
-    { ok: false, label: t.highExpenseRatio },
-  ];
-
-  const riskFactors = [t.seasonalIncomeThreeMonths, t.noFormalCreditHistory];
 
   const slideAnim = useRef(new Animated.Value(40)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -208,7 +248,7 @@ export default function LoanResultScreen() {
           </SectionCard>
 
           <SectionCard title={t.riskFactors}>
-            {riskFactors.map((r, i) => (
+            {riskFactorsList.map((r, i) => (
               <View key={i} className="flex-row items-start py-1">
                 <View className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 mr-2.5" />
                 <Text className="flex-1 text-[13px] text-slate-700 leading-5">{r}</Text>
@@ -217,9 +257,25 @@ export default function LoanResultScreen() {
           </SectionCard>
 
           <SectionCard title={t.recommendedProducts}>
-            <ProductCard icon="🏛" name={t.sbiKisanCreditCard ?? 'SBI Kisan Credit Card'} rate="7% p.a." upto="₹3L" tag={t.lowRiskBorrower} url="https://sbi.co.in" />
-            <ProductCard icon="🌾" name={t.nabardFarmLoan ?? 'NABARD Farm Loan'} rate="9% p.a." upto="₹5L" url="https://nabard.org" />
-            <ProductCard icon="🤝" name={t.grameenMfiLoan ?? 'Grameen MFI Loan'} rate="14% p.a." upto="₹1L" url="https://nabard.org" />
+            {parsedProducts.length > 0 ? (
+              parsedProducts.map((p, i) => (
+                <ProductCard
+                  key={i}
+                  icon={p.provider?.toLowerCase().includes('sbi') ? '🏛' : p.provider?.toLowerCase().includes('grameen') ? '🤝' : '🌾'}
+                  name={`${p.provider} ${p.productName}`}
+                  rate={`${p.interestRate}% p.a.`}
+                  upto={`Upto Rs ${p.maxAmount?.toLocaleString('en-IN')}`}
+                  tag={p.reason}
+                  url={p.provider?.toLowerCase().includes('sbi') ? 'https://sbi.co.in' : 'https://nabard.org'}
+                />
+              ))
+            ) : (
+              <>
+                <ProductCard icon="🏛" name={t.sbiKisanCreditCard ?? 'SBI Kisan Credit Card'} rate="7% p.a." upto="₹3L" tag={t.lowRiskBorrower} url="https://sbi.co.in" />
+                <ProductCard icon="🌾" name={t.nabardFarmLoan ?? 'NABARD Farm Loan'} rate="9% p.a." upto="₹5L" url="https://nabard.org" />
+                <ProductCard icon="🤝" name={t.grameenMfiLoan ?? 'Grameen MFI Loan'} rate="14% p.a." upto="₹1L" url="https://nabard.org" />
+              </>
+            )}
           </SectionCard>
         </Animated.View>
       </ScrollView>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { C } from '../../constants/colors';
 import { useStore } from '../../store';
 import type { LoanRisk } from '../../types';
 import { useTranslations } from '../../hooks/useTranslations';
+import { endpoints } from '../../services/api';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -20,6 +21,26 @@ const purposeOptions = {
   TAILOR: ['Machine repair', 'Cloth purchase', 'Order advance'],
   DAILY_WAGE: ['Emergency cash', 'Tools purchase', 'Travel for work'],
 };
+
+function mapPurposeToEnum(purposeStr: string): string {
+  const p = purposeStr.toLowerCase();
+  if (p.includes('seed') || p.includes('fertilizer') || p.includes('irrigation') || p.includes('crop') || p.includes('farm')) {
+    return 'AGRICULTURE';
+  }
+  if (p.includes('tool') || p.includes('machine') || p.includes('equipment')) {
+    return 'EQUIPMENT_PURCHASE';
+  }
+  if (p.includes('emergency') || p.includes('medical')) {
+    return 'MEDICAL';
+  }
+  if (p.includes('expansion') || p.includes('repair') || p.includes('improve')) {
+    return 'BUSINESS_EXPANSION';
+  }
+  if (p.includes('education') || p.includes('school') || p.includes('college')) {
+    return 'EDUCATION';
+  }
+  return 'WORKING_CAPITAL';
+}
 
 export default function LoanScreen() {
   const router = useRouter();
@@ -37,6 +58,7 @@ export default function LoanScreen() {
   const [expectedInterest, setExpectedInterest] = useState(12);
   const [purpose, setPurpose] = useState('Working capital');
   const [result, setResult] = useState<null | { emi: number; total: number; risk: LoanRisk; eligible: number }>(null);
+  const [loading, setLoading] = useState(false);
 
   const eligible = useMemo(() => {
     const savings = Math.max(0, monthlyIncome - monthlyExpenses);
@@ -44,45 +66,94 @@ export default function LoanScreen() {
     return Math.max(10000, Math.round((savings * habitMultiplier) / 1000) * 1000);
   }, [monthlyIncome, monthlyExpenses, pastRepaymentHabit]);
 
-  const analyze = () => {
+  const analyze = async () => {
     const principal = Number(amount);
     const tenure = Number(months);
     if (!principal || !tenure) {
       Alert.alert('Check loan details', 'Enter loan amount and tenure.');
       return;
     }
-    const monthlyRate = (expectedInterest / 100) / 12;
-    const emi = principal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
-    const burden = monthlyIncome ? emi / monthlyIncome : 1;
-    const risk: LoanRisk = burden > 0.45 || pastRepaymentHabit === 'Frequently Missed'
-      ? 'high'
-      : burden > 0.28 || hasActiveLoans
-        ? 'moderate'
-        : 'safe';
 
-    const savingsRate = monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0;
-    const habitBonus = pastRepaymentHabit === 'Never Missed' ? 200 : pastRepaymentHabit === 'Sometimes Delayed' ? 80 : 0;
-    const burdenPenalty = Math.round(burden * 300);
-    const rawScore = Math.round(400 + savingsRate * 250 + habitBonus - burdenPenalty);
-    const arthScore = Math.max(300, Math.min(950, rawScore));
+    setLoading(true);
+    try {
+      const mappedPurpose = mapPurposeToEnum(purpose);
+      const res = await endpoints.loanAnalysis({
+        requestedLoanAmount: principal,
+        expectedInterestRate: expectedInterest,
+        tenureMonths: tenure,
+        loanPurpose: mappedPurpose,
+        collateralValue: null,
+      });
 
-    setLoanRisk(risk);
-    setResult({ emi: Math.round(emi), total: Math.round(emi * tenure), risk, eligible });
+      const analysis = res.data?.data;
+      if (!analysis) {
+        throw new Error('No analysis data returned from backend.');
+      }
 
-    router.push({
-      pathname: '/screens/loan-result',
-      params: {
-        score: String(arthScore),
-        emi: String(Math.round(emi)),
-        total: String(Math.round(emi * tenure)),
-        eligible: String(eligible),
-        tenure: String(tenure),
-        interest: String(expectedInterest),
-        income: String(monthlyIncome),
-        risk,
-        purpose,
-      },
-    });
+      setLoanRisk(analysis.riskLevel?.toLowerCase() as LoanRisk);
+      setResult({
+        emi: Math.round(analysis.loanSummary?.monthlyEMI || 0),
+        total: Math.round(analysis.loanSummary?.totalPayable || 0),
+        risk: (analysis.riskLevel?.toLowerCase() || 'safe') as LoanRisk,
+        eligible: Math.round(analysis.loanSummary?.eligibleAmount || eligible),
+      });
+
+      router.push({
+        pathname: '/screens/loan-result',
+        params: {
+          score: String(analysis.arthScore || 700),
+          emi: String(Math.round(analysis.loanSummary?.monthlyEMI || 0)),
+          total: String(Math.round(analysis.loanSummary?.totalPayable || 0)),
+          eligible: String(Math.round(analysis.loanSummary?.eligibleAmount || eligible)),
+          tenure: String(analysis.loanSummary?.recommendedTenure || tenure),
+          interest: String(analysis.loanSummary?.interestRate || expectedInterest),
+          income: String(monthlyIncome),
+          risk: analysis.riskLevel?.toLowerCase() || 'safe',
+          purpose: purpose,
+          positiveFactors: JSON.stringify(analysis.positiveFactors || []),
+          negativeFactors: JSON.stringify(analysis.negativeFactors || []),
+          riskFactors: JSON.stringify(analysis.riskFactors || []),
+          recommendedProducts: JSON.stringify(analysis.recommendedProducts || []),
+        },
+      });
+    } catch (err) {
+      console.warn('Backend loan analysis failed, using local fallback:', err);
+      // Client-side fallback logic
+      const monthlyRate = (expectedInterest / 100) / 12;
+      const emi = principal * monthlyRate * Math.pow(1 + monthlyRate, tenure) / (Math.pow(1 + monthlyRate, tenure) - 1);
+      const burden = monthlyIncome ? emi / monthlyIncome : 1;
+      const risk: LoanRisk = burden > 0.45 || pastRepaymentHabit === 'Frequently Missed'
+        ? 'high'
+        : burden > 0.28 || hasActiveLoans
+          ? 'moderate'
+          : 'safe';
+
+      const savingsRate = monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0;
+      const habitBonus = pastRepaymentHabit === 'Never Missed' ? 200 : pastRepaymentHabit === 'Sometimes Delayed' ? 80 : 0;
+      const burdenPenalty = Math.round(burden * 300);
+      const rawScore = Math.round(400 + savingsRate * 250 + habitBonus - burdenPenalty);
+      const arthScore = Math.max(300, Math.min(950, rawScore));
+
+      setLoanRisk(risk);
+      setResult({ emi: Math.round(emi), total: Math.round(emi * tenure), risk, eligible });
+
+      router.push({
+        pathname: '/screens/loan-result',
+        params: {
+          score: String(arthScore),
+          emi: String(Math.round(emi)),
+          total: String(Math.round(emi * tenure)),
+          eligible: String(eligible),
+          tenure: String(tenure),
+          interest: String(expectedInterest),
+          income: String(monthlyIncome),
+          risk,
+          purpose,
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const riskColor = loanRisk === 'safe' ? C.emerald600 : loanRisk === 'moderate' ? C.amber600 : C.rose600;
@@ -177,9 +248,10 @@ export default function LoanScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity onPress={analyze}>
-              <LinearGradient colors={[C.emerald500, C.teal600]} style={{ borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}>
-                <Text className="text-white font-black">{t.analyzeLoan}</Text>
+            <TouchableOpacity onPress={analyze} disabled={loading}>
+              <LinearGradient colors={[C.emerald500, C.teal600]} style={{ borderRadius: 14, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
+                {loading && <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />}
+                <Text className="text-white font-black">{loading ? 'Analyzing...' : t.analyzeLoan}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>

@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { C } from '../../constants/colors';
 import { endpoints } from '../../services/api';
+import { useTranslations } from '../../hooks/useTranslations';
 import type { StockMeta, Transaction, UdharMeta } from '../../types';
 
 type UdharRow = {
@@ -67,6 +68,7 @@ function txToStock(tx: Transaction): StockRow {
 }
 
 export function UdharBook() {
+  const t = useTranslations();
   const [accounts, setAccounts]   = useState<UdharRow[]>([]);
   const [stockCycle, setStockCycle] = useState<StockRow[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -84,7 +86,7 @@ export function UdharBook() {
       setAccounts((grouped['Udhar']  ?? []).map(txToUdhar));
       setStockCycle((grouped['Stock'] ?? []).map(txToStock));
     } catch {
-      Alert.alert('Error', 'Could not load shop ledger. Check your connection.');
+      Alert.alert('Error', t.couldNotLoadData);
     } finally {
       setLoading(false);
       setRefreshing(false);

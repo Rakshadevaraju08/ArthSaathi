@@ -8,7 +8,7 @@ import { useStore, type OnboardingInputMode, type RepaymentHabit } from '../../s
 import { endpoints } from '../../services/api';
 import { setToken } from '../../services/auth';
 
-const langMap: Record<string, string> = { English: 'en', Hindi: 'hi', Kannada: 'kn', Marathi: 'mr', Tamil: 'ta', Telugu: 'te' };
+const langMap: Record<string, string> = { English: 'en', Hindi: 'hi', Kannada: 'kn' };
 const habits: RepaymentHabit[] = ['Never Missed', 'Sometimes Delayed', 'Frequently Missed'];
 
 const repaymentMap: Record<RepaymentHabit, string> = {

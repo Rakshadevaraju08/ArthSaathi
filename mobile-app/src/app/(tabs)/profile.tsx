@@ -20,32 +20,107 @@ import { useStore } from '../../store';
 import { endpoints } from '../../services/api';
 import { setToken } from '../../services/auth';
 import type { Lang } from '../../types';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const LANGS: { code: Lang; native: string }[] = [
   { code: 'English', native: 'English' },
-  { code: 'Hindi', native: 'Hindi' },
-  { code: 'Kannada', native: 'Kannada' },
-  { code: 'Marathi', native: 'Marathi' },
-  { code: 'Tamil', native: 'Tamil' },
-  { code: 'Telugu', native: 'Telugu' },
+  { code: 'Hindi', native: 'हिंदी' },
+  { code: 'Kannada', native: 'ಕನ್ನಡ' },
 ];
 
-const langMap: Record<string, string> = { English: 'en', Hindi: 'hi', Kannada: 'kn', Marathi: 'mr', Tamil: 'ta', Telugu: 'te' };
+const langMap: Record<string, string> = { English: 'en', Hindi: 'hi', Kannada: 'kn' };
 
-const TOGGLES = [
-  { key: 'notif', label: 'Enable Fraud Warnings', Icon: BellRing },
-  { key: 'fraud', label: 'Notifications Alerts', Icon: Shield },
-  { key: 'largeText', label: 'Large Accessibility Text', Icon: Type },
-  { key: 'biometric', label: 'Biometric Passkey Access', Icon: Fingerprint },
-] as const;
-
-const MENU = ['Privacy Policy', 'Help & Support', 'About ArthSaathi'];
-
-const roleLabel = {
-  FARMER: 'Farmer',
-  SHOP_OWNER: 'Grocery Shop',
-  TAILOR: 'Tailor',
-  DAILY_WAGE: 'Daily Wage Worker',
+const PROFILE_LOCALE: Record<string, Record<string, string>> = {
+  English: {
+    accountProfile: 'Account Profile',
+    editProfile: 'Edit Profile',
+    save: 'Save',
+    saving: 'Saving...',
+    arthSaathiUser: 'ArthSaathi User',
+    joined: 'Joined',
+    mobileNumber: 'Mobile',
+    notSet: 'Not set',
+    language: 'Language',
+    monthlyIncome: 'Monthly income',
+    monthlyExpenses: 'Monthly expenses',
+    workProfile: 'Work profile',
+    profession: 'Profession',
+    selectLanguage: 'Select Language',
+    preferences: 'Preferences',
+    enableFraudWarnings: 'Enable Fraud Warnings',
+    notificationsAlerts: 'Notifications Alerts',
+    largeAccessibilityText: 'Large Accessibility Text',
+    biometricPasskeyAccess: 'Biometric Passkey Access',
+    privacyPolicy: 'Privacy Policy',
+    helpAndSupport: 'Help & Support',
+    aboutArthSaathi: 'About ArthSaathi',
+    logOut: 'Log Out',
+    farmer: 'Farmer',
+    shopOwner: 'Grocery Shop',
+    tailor: 'Tailor',
+    dailyWage: 'Daily Wage Worker',
+    unknown: 'Unknown'
+  },
+  Hindi: {
+    accountProfile: 'खाता प्रोफ़ाइल',
+    editProfile: 'प्रोफ़ाइल संपादित करें',
+    save: 'सहेजें',
+    saving: 'सहेजा जा रहा है...',
+    arthSaathiUser: 'अर्थसाथी उपयोगकर्ता',
+    joined: 'शामिल हुए',
+    mobileNumber: 'मोबाइल नंबर',
+    notSet: 'सेट नहीं है',
+    language: 'भाषा',
+    monthlyIncome: 'मासिक आय',
+    monthlyExpenses: 'मासिक खर्च',
+    workProfile: 'कार्य प्रोफ़ाइल',
+    profession: 'पेशा',
+    selectLanguage: 'भाषा चुनें',
+    preferences: 'प्राथमिकताएं',
+    enableFraudWarnings: 'धोखाधड़ी की चेतावनी सक्षम करें',
+    notificationsAlerts: 'सूचना अलर्ट',
+    largeAccessibilityText: 'बड़ा एक्सेसिबिलिटी टेक्स्ट',
+    biometricPasskeyAccess: 'बायोमेट्रिक पासकी एक्सेस',
+    privacyPolicy: 'गोपनीयता नीति',
+    helpAndSupport: 'मदद और समर्थन',
+    aboutArthSaathi: 'अर्थसाथी के बारे में',
+    logOut: 'लॉग आउट',
+    farmer: 'किसान',
+    shopOwner: 'किराने की दुकान',
+    tailor: 'दर्जी',
+    dailyWage: 'दैनिक वेतन भोगी कर्मचारी',
+    unknown: 'अज्ञात'
+  },
+  Kannada: {
+    accountProfile: 'ಖಾತೆ ಪ್ರೊಫೈಲ್',
+    editProfile: 'ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ',
+    save: 'ಉಳಿಸಿ',
+    saving: 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...',
+    arthSaathiUser: 'ಅರ್ಥಸಾಥಿ ಬಳಕೆದಾರ',
+    joined: 'ಸೇರಿದ್ದಾರೆ',
+    mobileNumber: 'ಮೊಬೈಲ್ ಸಂಖ್ಯೆ',
+    notSet: 'ಹೊಂದಿಸಿಲ್ಲ',
+    language: 'ಭಾಷೆ',
+    monthlyIncome: 'ಮಾಸಿಕ ಆದಾಯ',
+    monthlyExpenses: 'ಮಾಸಿಕ ವೆಚ್ಚಗಳು',
+    workProfile: 'ಕೆಲಸದ ಪ್ರೊಫೈಲ್',
+    profession: 'ವೃತ್ತಿ',
+    selectLanguage: 'ಭಾಷೆಯನ್ನು ಆರಿಸಿ',
+    preferences: 'ಆದ್ಯತೆಗಳು',
+    enableFraudWarnings: 'ವಂಚನೆ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ',
+    notificationsAlerts: 'ಅಧಿಸೂಚನೆ ಎಚ್ಚರಿಕೆಗಳು',
+    largeAccessibilityText: 'ದೊಡ್ಡ ಪ್ರವೇಶಿಸುವಿಕೆ ಪಠ್ಯ',
+    biometricPasskeyAccess: 'ಬಯೋಮೆಟ್ರಿಕ್ ಪಾಸ್ಕೀ ಪ್ರವೇಶ',
+    privacyPolicy: 'ಗೌಪ್ಯತಾ ನೀತಿ',
+    helpAndSupport: 'ಸಹಾಯ ಮತ್ತು ಬೆಂಬಲ',
+    aboutArthSaathi: 'ಅರ್ಥಸಾಥಿ ಬಗ್ಗೆ',
+    logOut: 'ಲಾಗ್ ಔಟ್',
+    farmer: 'ರೈತ',
+    shopOwner: 'ದಿನಸಿ ಅಂಗಡಿ',
+    tailor: 'ಟೈಲರ್',
+    dailyWage: 'ದೈನಂದಿನ ಕೂಲಿ ಕಾರ್ಮಿಕ',
+    unknown: 'ತಿಳಿದಿಲ್ಲ'
+  }
 };
 
 export default function ProfileScreen() {
@@ -54,12 +129,35 @@ export default function ProfileScreen() {
   const language = useStore((s) => s.language);
   const setLanguage = useStore((s) => s.setLanguage);
   const resetGlobalDataState = useStore((s) => s.resetGlobalDataState);
+  const t = useTranslations();
+
   const [toggles, setToggles] = useState({ notif: true, fraud: true, largeText: false, biometric: true });
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '', income: '', expenses: '', businessDetails: {} as any });
+
+  const loc = PROFILE_LOCALE[language as string] || PROFILE_LOCALE['English'];
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'FARMER': return t.farmer ?? loc.farmer;
+      case 'SHOP_OWNER': return t.shopOwner ?? loc.shopOwner;
+      case 'TAILOR': return t.tailor ?? loc.tailor;
+      case 'DAILY_WAGE': return t.dailyWage ?? loc.dailyWage;
+      default: return t.unknown ?? loc.unknown;
+    }
+  };
+
+  const TOGGLES = [
+    { key: 'notif', label: t.enableFraudWarnings ?? loc.enableFraudWarnings, Icon: BellRing },
+    { key: 'fraud', label: t.notificationsAlerts ?? loc.notificationsAlerts, Icon: Shield },
+    { key: 'largeText', label: t.largeAccessibilityText ?? loc.largeAccessibilityText, Icon: Type },
+    { key: 'biometric', label: t.biometricPasskeyAccess ?? loc.biometricPasskeyAccess, Icon: Fingerprint },
+  ] as const;
+
+  const MENU = [t.privacyPolicy ?? loc.privacyPolicy, t.helpAndSupport ?? loc.helpAndSupport, t.aboutArthSaathi ?? loc.aboutArthSaathi];
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -209,9 +307,9 @@ export default function ProfileScreen() {
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-emerald-50 text-xs font-black uppercase">Account Profile</Text>
+                <Text className="text-emerald-50 text-xs font-black uppercase">{t.accountProfile ?? loc.accountProfile}</Text>
                 <TouchableOpacity onPress={isEditing ? handleSaveProfile : startEditing} className="bg-white/20 px-3 py-1 rounded-full">
-                  <Text className="text-white text-xs font-bold">{isEditing ? (saving ? 'Saving...' : 'Save') : 'Edit Profile'}</Text>
+                  <Text className="text-white text-xs font-bold">{isEditing ? (saving ? (t.saving ?? loc.saving) : (t.save ?? loc.save)) : (t.editProfile ?? loc.editProfile)}</Text>
                 </TouchableOpacity>
               </View>
               {isEditing ? (
@@ -221,15 +319,15 @@ export default function ProfileScreen() {
                   className="text-white text-2xl font-black bg-white/20 px-3 py-1 rounded-xl"
                 />
               ) : (
-                <Text className="text-white text-2xl font-black mt-1" numberOfLines={1}>{fullName || 'ArthSaathi User'}</Text>
+                <Text className="text-white text-2xl font-black mt-1" numberOfLines={1}>{fullName || (t.arthSaathiUser ?? loc.arthSaathiUser)}</Text>
               )}
               <View className="flex-row items-center mt-2 flex-wrap">
                 <View className="self-start bg-white/20 border border-white/20 rounded-full px-3 py-1 mr-2 mb-1">
-                  <Text className="text-white text-xs font-black">{roleLabel[occupationEnum as keyof typeof roleLabel] || 'Unknown'}</Text>
+                  <Text className="text-white text-xs font-black">{getRoleLabel(occupationEnum)}</Text>
                 </View>
                 {joinedDate ? (
                   <View className="self-start bg-white/20 border border-white/20 rounded-full px-3 py-1 mb-1">
-                    <Text className="text-white text-xs font-black">Joined {joinedDate}</Text>
+                    <Text className="text-white text-xs font-black">{t.joined ?? loc.joined} {joinedDate}</Text>
                   </View>
                 ) : null}
               </View>
@@ -256,7 +354,7 @@ export default function ProfileScreen() {
 
           <View className="flex-row mt-5">
             <View className="flex-1 bg-white/15 rounded-2xl px-3 py-3 mr-2">
-              <Text className="text-emerald-50 text-[11px] font-bold">Mobile</Text>
+              <Text className="text-emerald-50 text-[11px] font-bold">{t.mobileNumber ?? loc.mobileNumber}</Text>
               {isEditing ? (
                 <TextInput
                   value={editForm.phone}
@@ -266,12 +364,12 @@ export default function ProfileScreen() {
                 />
               ) : (
                 <Text className="text-white text-sm font-black mt-1" numberOfLines={1}>
-                  {mobileNumber || 'Not set'}
+                  {mobileNumber || (t.notSet ?? loc.notSet)}
                 </Text>
               )}
             </View>
             <View className="flex-1 bg-white/15 rounded-2xl px-3 py-3 ml-2">
-              <Text className="text-emerald-50 text-[11px] font-bold">Language</Text>
+              <Text className="text-emerald-50 text-[11px] font-bold">{t.language ?? loc.language}</Text>
               <Text className="text-white text-sm font-black mt-1">{language}</Text>
             </View>
           </View>
@@ -280,7 +378,7 @@ export default function ProfileScreen() {
         <View className="px-4 mt-4">
           <View className="flex-row mb-3">
             <View className="flex-1 bg-white rounded-2xl border border-slate-100 p-4 mr-2">
-              <Text className="text-slate-500 text-xs font-bold">Monthly income</Text>
+              <Text className="text-slate-500 text-xs font-bold">{t.monthlyIncome ?? loc.monthlyIncome}</Text>
               {isEditing ? (
                 <TextInput
                   value={editForm.income}
@@ -295,7 +393,7 @@ export default function ProfileScreen() {
               )}
             </View>
             <View className="flex-1 bg-white rounded-2xl border border-slate-100 p-4 ml-2">
-              <Text className="text-slate-500 text-xs font-bold">Monthly expenses</Text>
+              <Text className="text-slate-500 text-xs font-bold">{t.monthlyExpenses ?? loc.monthlyExpenses}</Text>
               {isEditing ? (
                 <TextInput
                   value={editForm.expenses}
@@ -312,10 +410,10 @@ export default function ProfileScreen() {
           </View>
 
           <View className="bg-white rounded-2xl border border-slate-100 p-4 mb-3">
-            <Text className="text-sm font-black text-slate-800 mb-3">Work profile</Text>
+            <Text className="text-sm font-black text-slate-800 mb-3">{t.workProfile ?? loc.workProfile}</Text>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-slate-500 text-sm">Profession</Text>
-            <Text className="text-slate-800 text-sm font-black">{roleLabel[occupationEnum as keyof typeof roleLabel] || 'Unknown'}</Text>
+              <Text className="text-slate-500 text-sm">{t.profession ?? loc.profession}</Text>
+            <Text className="text-slate-800 text-sm font-black">{getRoleLabel(occupationEnum)}</Text>
             </View>
             {displayDetails.map(([key, value]) => (
               <View key={key} className="flex-row justify-between items-center mb-2">
@@ -339,7 +437,7 @@ export default function ProfileScreen() {
           </View>
 
           <View className="bg-white rounded-2xl p-4 border border-slate-100 mb-3">
-            <Text className="text-sm font-black text-slate-800 mb-3">Select Language</Text>
+            <Text className="text-sm font-black text-slate-800 mb-3">{t.selectLanguage ?? loc.selectLanguage}</Text>
             <View className="flex-row flex-wrap">
               {LANGS.map((item) => (
                 <TouchableOpacity
@@ -358,7 +456,7 @@ export default function ProfileScreen() {
           </View>
 
           <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-3">
-            <Text className="text-sm font-black text-slate-800 px-4 pt-4 pb-3">Preferences</Text>
+            <Text className="text-sm font-black text-slate-800 px-4 pt-4 pb-3">{t.preferences ?? loc.preferences}</Text>
             {TOGGLES.map((row, index) => (
               <View key={row.key} className={`flex-row items-center px-4 py-3 ${index < TOGGLES.length - 1 ? 'border-b border-slate-100' : ''}`}>
                 <row.Icon size={16} color={C.slate500} />
@@ -378,7 +476,7 @@ export default function ProfileScreen() {
           </View>
 
           <TouchableOpacity onPress={handleLogout} activeOpacity={0.85} className="bg-rose-50 border border-rose-100 rounded-2xl py-3.5 items-center justify-center">
-            <Text className="text-sm font-bold text-rose-600">Log Out</Text>
+            <Text className="text-sm font-bold text-rose-600">{t.logOut ?? loc.logOut}</Text>
           </TouchableOpacity>
 
           <Text className="text-center text-[11px] text-slate-500 mt-3 mb-2">Version 1.0.4 - Local Prototype</Text>

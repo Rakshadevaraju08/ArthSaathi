@@ -9,9 +9,11 @@ import { C } from '../../constants/colors';
 import { useStore } from '../../store';
 import { endpoints } from '../../services/api';
 import { setToken } from '../../services/auth';
+import { useTranslations } from '../../hooks/useTranslations';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -109,15 +111,15 @@ export default function LoginScreen() {
           borderBottomRightRadius: 28,
         }}
       >
-        <Text className="text-white text-3xl font-black">Login</Text>
-        <Text className="text-emerald-50 mt-2 text-sm">Continue with your mobile number and password.</Text>
+        <Text className="text-white text-3xl font-black">{t.loginTitle}</Text>
+        <Text className="text-emerald-50 mt-2 text-sm">{t.loginSubtitle}</Text>
       </LinearGradient>
 
       <View className="flex-1 justify-center px-5">
         <TextInput
           value={mobileNumber}
           onChangeText={setMobileNumber}
-          placeholder="Mobile number"
+          placeholder={t.mobileNumber}
           keyboardType="phone-pad"
           maxLength={10}
           placeholderTextColor="#94a3b8"
@@ -126,7 +128,7 @@ export default function LoginScreen() {
         <TextInput
           value={password}
           onChangeText={setPassword}
-          placeholder="Password"
+          placeholder={t.password}
           secureTextEntry
           placeholderTextColor="#94a3b8"
           className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-5"
@@ -137,11 +139,11 @@ export default function LoginScreen() {
           disabled={submitting}
           className={`rounded-2xl py-4 items-center ${submitting ? 'bg-emerald-400' : 'bg-emerald-600'}`}
         >
-          <Text className="text-white text-base font-black">{submitting ? 'Logging in...' : 'Login'}</Text>
+          <Text className="text-white text-base font-black">{submitting ? 'Logging in...' : t.login}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace('/signup')} className="py-4 items-center">
-          <Text className="text-emerald-700 font-black">New user? Create account</Text>
+          <Text className="text-emerald-700 font-black">{t.alreadyHaveAccount}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

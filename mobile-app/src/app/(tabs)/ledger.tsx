@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { useStore, useTotals } from '../../store';
 import { endpoints } from '../../services/api';
 import { C } from '../../constants/colors';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -84,26 +85,14 @@ const OCCUPATION_CONFIGS = {
 
 export default function LedgerScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const occupation = useStore((s) => s.occupation) || 'FARMER';
   const transactions = useStore((s) => s.transactions);
-  const loans = useStore((s) => s.loans);
   const setTransactions = useStore((s) => s.setTransactions);
   const { income, expense, savings } = useTotals();
 
   // Get configuration based on active occupation
   const config = OCCUPATION_CONFIGS[occupation as keyof typeof OCCUPATION_CONFIGS] || OCCUPATION_CONFIGS.FARMER;
-  const activeBorrowings = useMemo(() => loans.filter((loan) => loan.type === 'borrowed'), [loans]);
-  const borrowingSummary = useMemo(() => {
-    const remaining = activeBorrowings.reduce((sum, loan) => sum + loan.remainingAmount, 0);
-    const overdue = activeBorrowings.filter((loan) => loan.status === 'overdue').length;
-    const nextDue = [...activeBorrowings].sort((a, b) => {
-      if (a.status === 'overdue' && b.status !== 'overdue') return -1;
-      if (a.status !== 'overdue' && b.status === 'overdue') return 1;
-      return (a.dueDate ?? '').localeCompare(b.dueDate ?? '');
-    })[0];
-
-    return { remaining, overdue, nextDue };
-  }, [activeBorrowings]);
 
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -262,53 +251,10 @@ export default function LedgerScreen() {
           }}
           >
             <Feather name="plus" size={16} color="#fff" />
-            <Text className="text-white font-bold ml-1 text-sm">Add New</Text>
+            <Text className="text-white font-bold ml-1 text-sm">{t.addNew}</Text>
           </TouchableOpacity>
         </View>
 
-        <View className="bg-white rounded-3xl border border-slate-100 p-4 mb-4">
-          <View className="flex-row items-center justify-between mb-3">
-            <View>
-              <Text className="text-slate-900 text-base font-black">Borrowings</Text>
-              <Text className="text-slate-500 text-xs mt-1">Banks, lenders and repayment due</Text>
-            </View>
-            <View className="w-11 h-11 rounded-2xl bg-emerald-50 items-center justify-center">
-              <Feather name="credit-card" size={18} color={C.emerald600} />
-            </View>
-          </View>
-
-          <View className="flex-row gap-3 mb-3">
-            <View className="flex-1 bg-slate-50 rounded-2xl px-3 py-3 border border-slate-100">
-              <Text className="text-slate-500 text-[11px] font-semibold">Outstanding</Text>
-              <Text className="text-slate-900 text-base font-black mt-1">
-                {borrowingSummary.remaining ? fmt(borrowingSummary.remaining) : 'None'}
-              </Text>
-            </View>
-            <View className="flex-1 bg-slate-50 rounded-2xl px-3 py-3 border border-slate-100">
-              <Text className="text-slate-500 text-[11px] font-semibold">Overdue</Text>
-              <Text className="text-slate-900 text-base font-black mt-1">
-                {borrowingSummary.overdue ? `${borrowingSummary.overdue} items` : 'Clear'}
-              </Text>
-            </View>
-          </View>
-
-          <View className="bg-slate-50 rounded-2xl px-3 py-3 border border-slate-100">
-            <Text className="text-slate-500 text-[11px] font-semibold">Next due</Text>
-            <Text className="text-slate-900 text-sm font-black mt-1">
-              {borrowingSummary.nextDue
-                ? `${borrowingSummary.nextDue.personName} • ${borrowingSummary.nextDue.dueDate ?? 'No date'}`
-                : 'No mock borrowings'}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => router.push('/screens/borrow' as any)}
-            className="bg-emerald-500 rounded-2xl py-3 items-center mt-4"
-          >
-            <Text className="text-white font-black">Open borrower flow</Text>
-          </TouchableOpacity>
-        </View>
-  
         <ScrollView
           className="flex-1"
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -385,7 +331,7 @@ export default function LedgerScreen() {
           {filteredTx.length === 0 ? (
             <View className="bg-white rounded-2xl border border-slate-100 p-8 items-center justify-center">
               <Text className="text-slate-400 font-bold text-sm">No transactions found</Text>
-              <Text className="text-slate-400 text-xs mt-1">Tap Add New to register a transaction</Text>
+              <Text className="text-slate-400 text-xs mt-1">{t.addNew} to register a transaction</Text>
             </View>
           ) : (
             <View className="gap-2">
@@ -444,7 +390,7 @@ export default function LedgerScreen() {
                 );
               })}
               <Text className="text-center text-[10px] text-slate-400 mt-2">
-                💡 Tip: Long-press a transaction to delete it
+                💡 {t.tipDeleteTransaction}
               </Text>
             </View>
           )}
@@ -459,7 +405,7 @@ export default function LedgerScreen() {
             
             {/* Modal Header */}
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-xl font-black text-slate-800">Add Transaction</Text>
+              <Text className="text-xl font-black text-slate-800">{t.addTransaction}</Text>
               <TouchableOpacity
                 onPress={() => setShowAddModal(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"
@@ -471,7 +417,7 @@ export default function LedgerScreen() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
               
               {/* Transaction Type Selection */}
-              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Type</Text>
+              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t.type}</Text>
               <View className="flex-row gap-2 mb-4">
                 {(['income', 'expense', 'saving'] as const).map((type) => (
                   <TouchableOpacity
@@ -512,7 +458,7 @@ export default function LedgerScreen() {
               </View>
 
               {/* Amount Input */}
-              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Amount (Rs)</Text>
+              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t.amount} (Rs)</Text>
               <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 mb-4">
                 <Text className="text-lg font-black text-slate-700 mr-2">₹</Text>
                 <TextInput
@@ -526,7 +472,7 @@ export default function LedgerScreen() {
               </View>
 
               {/* Category Selection */}
-              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Category</Text>
+              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t.category}</Text>
               <View className="flex-row flex-wrap gap-2 mb-4">
                 {config.categories.map((cat) => (
                   <TouchableOpacity
@@ -580,7 +526,7 @@ export default function LedgerScreen() {
               )}
 
               {/* Note Input */}
-              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Note (Optional)</Text>
+              <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">{t.note} (Optional)</Text>
               <TextInput
                 placeholder="Add a brief description..."
                 placeholderTextColor="#94a3b8"
@@ -607,7 +553,7 @@ export default function LedgerScreen() {
                 {isSubmitting ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className="text-white text-base font-black">Save Transaction</Text>
+                  <Text className="text-white text-base font-black">{t.saveTransaction}</Text>
                 )}
               </TouchableOpacity>
 

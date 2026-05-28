@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -28,6 +29,7 @@ function formatDate(dateValue: string | null) {
 
 export default function BorrowScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const loans = useStore((state) => state.loans);
 
   const activeBorrowings = useMemo(
@@ -67,9 +69,9 @@ export default function BorrowScreen() {
         >
           <View className="flex-row items-start justify-between">
             <View className="flex-1 pr-3">
-              <Text className="text-white text-2xl font-black">Borrower Flow</Text>
+              <Text className="text-white text-2xl font-black">{t.borrowerFlow}</Text>
               <Text className="text-emerald-50 text-sm mt-2 leading-5">
-                Track money borrowed from banks or lenders, review what is due now, and continue to payment.
+                {t.whatHappensNext}
               </Text>
             </View>
             <View className="w-12 h-12 rounded-2xl bg-white/15 items-center justify-center">
@@ -78,8 +80,8 @@ export default function BorrowScreen() {
           </View>
 
           <View className="flex-row mt-4 space-x-3">
-            <MetricCard label="Outstanding" value={fmt(summary.totalRemaining)} />
-            <MetricCard label="Borrowed" value={fmt(summary.totalBorrowed)} />
+            <MetricCard label={t.remainingBalance} value={fmt(summary.totalRemaining)} />
+            <MetricCard label={t.originalBorrowed} value={fmt(summary.totalBorrowed)} />
           </View>
         </LinearGradient>
 
@@ -87,8 +89,8 @@ export default function BorrowScreen() {
           <View className="bg-white rounded-3xl border border-slate-100 p-4 mb-4">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">Quick snapshot</Text>
-                <Text className="text-slate-900 text-lg font-black mt-1">{summary.lenderCount} lenders and banks</Text>
+                <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t.quickSnapshot}</Text>
+                <Text className="text-slate-900 text-lg font-black mt-1">{summary.lenderCount} {t.lendersAndBanks}</Text>
               </View>
               <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center">
                 <Feather name="trending-down" size={20} color={C.emerald600} />
@@ -96,17 +98,17 @@ export default function BorrowScreen() {
             </View>
 
             <View className="flex-row mt-4 gap-3">
-              <StatPill label="Due soon" value={summary.overdueCount ? `${summary.overdueCount} overdue` : 'No overdue'} />
-              <StatPill label="Next payment" value={summary.nextDue ? formatDate(summary.nextDue.dueDate) : 'None'} />
+              <StatPill label={t.dueSoon} value={summary.overdueCount ? `${summary.overdueCount} overdue` : 'No overdue'} />
+              <StatPill label={t.nextPayment} value={summary.nextDue ? formatDate(summary.nextDue.dueDate) : 'None'} />
             </View>
           </View>
 
           <View className="mb-4">
-            <Text className="text-slate-900 text-base font-black mb-3">Active borrowings</Text>
+            <Text className="text-slate-900 text-base font-black mb-3">{t.activeBorrowings}</Text>
             {activeBorrowings.length === 0 ? (
               <View className="bg-white rounded-3xl border border-slate-100 p-6 items-center">
                 <Feather name="check-circle" size={24} color={C.emerald600} />
-                <Text className="text-slate-500 text-sm mt-3">No mock borrowings available.</Text>
+                <Text className="text-slate-500 text-sm mt-3">{t.noMockBorrowings}</Text>
               </View>
             ) : (
               activeBorrowings.map((loan) => {
@@ -170,10 +172,10 @@ export default function BorrowScreen() {
           </View>
 
           <View className="bg-white rounded-3xl border border-slate-100 p-4">
-            <Text className="text-slate-900 text-base font-black">What happens next</Text>
-            <Text className="text-slate-600 text-sm mt-2 leading-5">
-              You will review the lender, select a payment method, watch the payment process, and the ledger will update locally with a repayment entry.
-            </Text>
+              <Text className="text-slate-900 text-base font-black">{t.whatHappensNext}</Text>
+              <Text className="text-slate-600 text-sm mt-2 leading-5">
+                {t.paymentRecordedLocally}
+              </Text>
           </View>
         </View>
       </ScrollView>

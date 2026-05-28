@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { useTranslations } from '../../hooks/useTranslations';
 
 type FlowStep = 'summary' | 'gateway' | 'processing' | 'success' | 'analysis' | 'insights';
 
@@ -44,6 +45,7 @@ function calcDueAmount(remaining: number) {
 
 export default function BorrowResultScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const params = useLocalSearchParams<{ loanId?: string }>();
   const loans = useStore((state) => state.loans);
   const recordLoanRepayment = useStore((state) => state.recordLoanRepayment);
@@ -101,8 +103,8 @@ export default function BorrowResultScreen() {
           <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-xl bg-white/15 items-center justify-center">
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text className="text-white text-2xl font-black mt-4">Payment Flow</Text>
-          <Text className="text-emerald-50 text-sm mt-2 leading-5">Mock payment journey for a lender or bank repayment. The ledger updates locally after payment completes.</Text>
+          <Text className="text-white text-2xl font-black mt-4">{t.paymentFlow}</Text>
+          <Text className="text-emerald-50 text-sm mt-2 leading-5">{t.paymentRecordedLocally}</Text>
           <View className="flex-row mt-4">
             {steps.map((item, index) => (
               <View key={item} className="flex-1 items-center">
@@ -114,28 +116,28 @@ export default function BorrowResultScreen() {
 
         <View className="px-5 mt-5">
           {step === 'summary' && (
-            <SectionCard title="Payment initiation">
-              <KeyValue label="Borrower" value={loan.personName} />
-              <KeyValue label="Amount due now" value={fmt(paymentAmount)} />
-              <KeyValue label="Original borrowed" value={fmt(loan.amount)} />
-              <KeyValue label="Remaining balance" value={fmt(loan.remainingAmount)} />
-              <KeyValue label="Due date" value={formatDate(loan.dueDate)} />
+            <SectionCard title={t.paymentInitiation}>
+              <KeyValue label={t.borrower} value={loan.personName} />
+              <KeyValue label={t.amountDueNow} value={fmt(paymentAmount)} />
+              <KeyValue label={t.originalBorrowed} value={fmt(loan.amount)} />
+              <KeyValue label={t.remainingBalance} value={fmt(loan.remainingAmount)} />
+              <KeyValue label={t.dueDate} value={formatDate(loan.dueDate)} />
               <View className="mt-4 bg-emerald-50 rounded-2xl p-4">
-                <Text className="text-emerald-900 font-black">Repayment progress</Text>
+                <Text className="text-emerald-900 font-black">{t.repaymentProgress}</Text>
                 <View className="h-2 bg-emerald-100 rounded-full overflow-hidden mt-3">
                   <View className="h-2 bg-emerald-500 rounded-full" style={{ width: `${Math.max(paymentProgress, 8)}%` }} />
                 </View>
                 <Text className="text-emerald-700 text-xs mt-2 font-semibold">{paymentProgress}% of this borrowing has already been repaid.</Text>
               </View>
               <TouchableOpacity onPress={() => setStep('gateway')} className="bg-emerald-600 rounded-2xl py-4 items-center mt-4">
-                <Text className="text-white font-black">Proceed to payment</Text>
+                <Text className="text-white font-black">{t.proceedToPayment}</Text>
               </TouchableOpacity>
             </SectionCard>
           )}
 
           {step === 'gateway' && (
-            <SectionCard title="Select payment method">
-              <Text className="text-slate-500 text-sm mb-4">Choose a mock payment rail and continue to complete the repayment.</Text>
+            <SectionCard title={t.selectPaymentMethod}>
+              <Text className="text-slate-500 text-sm mb-4">{t.amountPayable}</Text>
               <View className="gap-3">
                 {paymentMethods.map((method) => (
                   <TouchableOpacity
@@ -157,25 +159,25 @@ export default function BorrowResultScreen() {
                 ))}
               </View>
               <View className="bg-slate-50 rounded-2xl p-4 mt-4">
-                <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">Amount payable</Text>
+                <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t.amountPayable}</Text>
                 <Text className="text-slate-900 text-2xl font-black mt-1">{fmt(paymentAmount)}</Text>
                 <Text className="text-slate-500 text-xs mt-2">This mock payment will reduce the remaining balance on the selected borrowing.</Text>
               </View>
               <TouchableOpacity onPress={() => setStep('processing')} className="bg-emerald-600 rounded-2xl py-4 items-center mt-4">
-                <Text className="text-white font-black">Pay now</Text>
+                <Text className="text-white font-black">{t.payNow}</Text>
               </TouchableOpacity>
             </SectionCard>
           )}
 
           {step === 'processing' && (
-            <SectionCard title="Processing payment">
+            <SectionCard title={t.processingPayment}>
               <View className="items-center py-6">
                 <View className="w-36 h-36 rounded-full border-8 border-emerald-100 items-center justify-center">
                   <View className="w-24 h-24 rounded-full bg-emerald-50 items-center justify-center">
                     <Feather name="shield" size={32} color={C.emerald600} />
                   </View>
                 </View>
-                <Text className="text-slate-900 text-xl font-black mt-5 text-center">Verifying your repayment</Text>
+                <Text className="text-slate-900 text-xl font-black mt-5 text-center">{t.verifyingRepayment}</Text>
                 <Text className="text-slate-500 text-sm mt-2 text-center">Please do not close the app or press back.</Text>
                 <ActivityIndicator color={C.emerald600} className="mt-5" />
               </View>
@@ -183,34 +185,34 @@ export default function BorrowResultScreen() {
           )}
 
           {step === 'success' && (
-            <SectionCard title="Payment success">
+            <SectionCard title={t.paymentSuccess}>
               <View className="items-center py-3">
                 <View className="w-20 h-20 rounded-full bg-emerald-50 items-center justify-center">
                   <Feather name="check" size={36} color={C.emerald600} />
                 </View>
-                <Text className="text-emerald-700 text-2xl font-black mt-4">Payment successful</Text>
-                <Text className="text-slate-500 text-sm mt-2 text-center">Your repayment has been recorded locally and the ledger has been updated.</Text>
+                <Text className="text-emerald-700 text-2xl font-black mt-4">{t.paymentSuccessful}</Text>
+                <Text className="text-slate-500 text-sm mt-2 text-center">{t.paymentRecordedLocally}</Text>
               </View>
               <View className="bg-slate-50 rounded-2xl p-4 mt-2">
-                <KeyValue label="Transaction ID" value={transactionId} />
-                <KeyValue label="Method" value={selectedMethod.label} />
-                <KeyValue label="Paid to" value={loan.personName} />
-                <KeyValue label="Amount" value={fmt(paymentAmount)} />
-                <KeyValue label="Remaining after payment" value={fmt(remainingAfterPayment)} />
+                <KeyValue label={t.transactionId} value={transactionId} />
+                <KeyValue label={t.method} value={selectedMethod.label} />
+                <KeyValue label={t.paidTo} value={loan.personName} />
+                <KeyValue label={t.amount} value={fmt(paymentAmount)} />
+                <KeyValue label={t.remainingAfterPayment} value={fmt(remainingAfterPayment)} />
               </View>
               <TouchableOpacity onPress={() => setStep('analysis')} className="bg-emerald-600 rounded-2xl py-4 items-center mt-4">
-                <Text className="text-white font-black">View insights</Text>
+                <Text className="text-white font-black">{t.viewInsights}</Text>
               </TouchableOpacity>
             </SectionCard>
           )}
 
           {step === 'analysis' && (
-            <SectionCard title="Analyzing your payment">
+            <SectionCard title={t.analyzingYourPayment}>
               <View className="items-center py-6">
                 <View className="w-28 h-28 rounded-full border-8 border-indigo-100 items-center justify-center">
                   <Feather name="cpu" size={32} color="#6366f1" />
                 </View>
-                <Text className="text-slate-900 text-lg font-black mt-5">Updating repayment insights</Text>
+                <Text className="text-slate-900 text-lg font-black mt-5">{t.updatingRepaymentInsights}</Text>
               </View>
               <View className="space-y-3">
                 <AnalysisRow label="Categorizing repayment" done />
@@ -225,23 +227,23 @@ export default function BorrowResultScreen() {
           )}
 
           {step === 'insights' && (
-            <SectionCard title="Ledger updated">
+            <SectionCard title={t.ledgerUpdated}>
               <View className="flex-row gap-3 mb-4">
-                <InsightCard label="New balance" value={fmt(remainingAfterPayment)} />
-                <InsightCard label="Status" value={completed ? 'Paid down' : 'Active'} />
+                <InsightCard label={t.newBalance} value={fmt(remainingAfterPayment)} />
+                <InsightCard label={t.status} value={completed ? 'Paid down' : 'Active'} />
               </View>
               <View className="bg-emerald-50 rounded-2xl p-4">
-                <Text className="text-emerald-900 font-black">Mock insight</Text>
+                <Text className="text-emerald-900 font-black">{t.mockInsight}</Text>
                 <Text className="text-emerald-800 text-sm mt-2 leading-5">
-                  Your payment to {loan.personName} was recorded successfully. The remaining liability has been reduced, and the repayment entry now appears in the ledger tab.
+                  {loan.personName}. {t.paymentRecordedLocally}
                 </Text>
               </View>
               <View className="flex-row gap-3 mt-4">
                 <TouchableOpacity onPress={() => router.push('/(tabs)/ledger')} className="flex-1 bg-emerald-600 rounded-2xl py-4 items-center">
-                  <Text className="text-white font-black">Go to ledger</Text>
+                  <Text className="text-white font-black">{t.goToLedger}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setStep('summary')} className="flex-1 bg-slate-100 rounded-2xl py-4 items-center">
-                  <Text className="text-slate-900 font-black">Pay another</Text>
+                  <Text className="text-slate-900 font-black">{t.payAnother}</Text>
                 </TouchableOpacity>
               </View>
             </SectionCard>

@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { C } from '../../constants/colors';
 import { endpoints } from '../../services/api';
+import { useTranslations } from '../../hooks/useTranslations';
 import type { PaymentMeta, ShiftMeta, Transaction } from '../../types';
 
 type ShiftRow = {
@@ -37,7 +38,7 @@ function txToShift(tx: Transaction): ShiftRow {
   const m = (tx.ledgerMeta ?? {}) as ShiftMeta;
   return {
     id:       tx.id,
-    name:     m.siteName    ?? tx.note ?? 'Unknown site',
+    name:     m.siteName    ?? tx.note ?? 'Unknown',
     days:     m.daysWorked  ?? '',
     pay:      `Rs ${tx.amount.toLocaleString('en-IN')}`,
     payRaw:   tx.amount,
@@ -66,6 +67,7 @@ function thisMonthRange() {
 }
 
 export function WageTracker() {
+  const t = useTranslations();
   const [shifts, setShifts]         = useState<ShiftRow[]>([]);
   const [payments, setPayments]     = useState<PaymentRow[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -83,7 +85,7 @@ export function WageTracker() {
       setShifts((grouped['Shift']        ?? []).map(txToShift));
       setPayments((grouped['Payment Due'] ?? []).map(txToPayment));
     } catch {
-      Alert.alert('Error', 'Could not load wage tracker. Check your connection.');
+      Alert.alert('Error', t.couldNotLoadData);
     } finally {
       setLoading(false);
       setRefreshing(false);

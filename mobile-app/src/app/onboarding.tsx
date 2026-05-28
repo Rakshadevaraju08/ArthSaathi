@@ -6,17 +6,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { C } from '../constants/colors';
-import { TRANSLATIONS } from '../constants/translations';
+import { useTranslations } from '../hooks/useTranslations';
 import { useStore } from '../store';
 import type { Lang } from '../types';
 
 const LANGS: { code: Lang; native: string }[] = [
   { code: 'English', native: 'English' },
-  { code: 'Hindi', native: 'Hindi' },
-  { code: 'Kannada', native: 'Kannada' },
-  { code: 'Marathi', native: 'Marathi' },
-  { code: 'Tamil', native: 'Tamil' },
-  { code: 'Telugu', native: 'Telugu' },
+  { code: 'Hindi', native: 'हिंदी' },
+  { code: 'Kannada', native: 'ಕನ್ನಡ' },
 ];
 
 export default function Onboarding() {
@@ -24,7 +21,7 @@ export default function Onboarding() {
   const lang = useStore((s) => s.language);
   const setLanguage = useStore((s) => s.setLanguage);
   const setOnboarded = useStore((s) => s.setOnboarded);
-  const t = TRANSLATIONS[lang];
+  const t = useTranslations();
 
   const go = (route: '/login' | '/signup') => {
     setOnboarded(true);
@@ -64,7 +61,7 @@ export default function Onboarding() {
           <Text className="text-sm text-slate-500 text-center mt-2 leading-5">{t.tagline}</Text>
 
           <View className="mt-9">
-            <Text className="text-xs font-black text-slate-500 uppercase mb-3">Choose your language</Text>
+            <Text className="text-xs font-black text-slate-500 uppercase mb-3">{t.chooseLanguage ?? 'Choose your language'}</Text>
             <View className="flex-row flex-wrap">
               {LANGS.map((item) => {
                 const active = lang === item.code;
@@ -93,7 +90,7 @@ export default function Onboarding() {
               end={{ x: 1, y: 0 }}
               style={{ borderRadius: 18, paddingVertical: 16, alignItems: 'center' }}
             >
-              <Text className="text-white text-[17px] font-black">Create new account</Text>
+              <Text className="text-white text-[17px] font-black">{t.createAccount ?? 'Create new account'}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -102,7 +99,7 @@ export default function Onboarding() {
             onPress={() => go('/login')}
             className="bg-white border border-emerald-100 rounded-[18px] py-4 items-center mt-3"
           >
-            <Text className="text-emerald-700 text-[16px] font-black">Login to existing account</Text>
+            <Text className="text-emerald-700 text-[16px] font-black">{t.loginToAccount ?? 'Login to existing account'}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

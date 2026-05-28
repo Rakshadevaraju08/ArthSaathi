@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { C } from '../../constants/colors';
 import type { OnboardingInputMode } from '../../store';
+import { useTranslations } from '../../hooks/useTranslations';
 
 type Field = {
   label: string;
@@ -48,6 +49,8 @@ export function QuestionScaffold({
   submitLabel = 'Forward to dashboard',
   submitDisabled = false,
 }: Props) {
+  const t = useTranslations();
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
@@ -62,13 +65,13 @@ export function QuestionScaffold({
             borderBottomLeftRadius: 28,
             borderBottomRightRadius: 28,
           }}
-        >
+          >
           <Text className="text-white text-2xl font-black">{title}</Text>
           <Text className="text-emerald-50 text-sm mt-2 leading-5">{subtitle}</Text>
         </LinearGradient>
 
         <View className="px-5 mt-5">
-          <Text className="text-xs font-black text-slate-500 mb-2 uppercase">Answer mode</Text>
+          <Text className="text-xs font-black text-slate-500 mb-2 uppercase">{t.answerMode}</Text>
           <View className="flex-row bg-white border border-slate-200 rounded-xl p-1 mb-5">
             {(['TEXT', 'VOICE'] as const).map((item) => {
               const active = mode === item;
@@ -79,7 +82,7 @@ export function QuestionScaffold({
                   className={`flex-1 py-3 rounded-lg items-center ${active ? 'bg-emerald-600' : ''}`}
                 >
                   <Text className={`font-black ${active ? 'text-white' : 'text-slate-600'}`}>
-                    {item === 'TEXT' ? 'Normal input' : 'Voice input'}
+                    {item === 'TEXT' ? t.normalInput : t.voiceInput}
                   </Text>
                 </TouchableOpacity>
               );
@@ -91,10 +94,10 @@ export function QuestionScaffold({
               <View className="w-16 h-16 rounded-full bg-emerald-50 items-center justify-center mb-3">
                 <Feather name="mic" size={28} color={C.emerald600} />
               </View>
-              <Text className="text-slate-900 font-black text-base">Voice question mode</Text>
-              <Text className="text-slate-500 text-sm text-center mt-2 leading-5">{voiceSummary}</Text>
+              <Text className="text-slate-900 font-black text-base">{t.voiceQuestionTitle}</Text>
+              <Text className="text-slate-500 text-sm text-center mt-2 leading-5">{voiceSummary || t.voiceQuestionSummary}</Text>
               <TouchableOpacity onPress={onVoiceFill} className="bg-emerald-600 rounded-xl px-5 py-3 mt-4">
-                <Text className="text-white font-black">Simulate voice answers</Text>
+                <Text className="text-white font-black">{t.simulateVoiceAnswers}</Text>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -139,7 +142,7 @@ export function QuestionScaffold({
             disabled={submitDisabled}
             className={`rounded-2xl py-4 items-center mt-2 ${submitDisabled ? 'bg-emerald-400' : 'bg-emerald-600'}`}
           >
-            <Text className="text-white text-base font-black">{submitLabel}</Text>
+            <Text className="text-white text-base font-black">{submitLabel || t.forwardToDashboard}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

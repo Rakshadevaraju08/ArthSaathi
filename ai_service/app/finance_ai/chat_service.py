@@ -24,9 +24,6 @@ def build_system_prompt(user_context: dict, language: str) -> str:
         "en": "Respond only in English.",
         "hi": "हमेशा हिंदी में जवाब दें। (Always respond in Hindi.)",
         "kn": "ಯಾವಾಗಲೂ ಕನ್ನಡದಲ್ಲಿ ಉತ್ತರ ಕೊಡಿ. (Always respond in Kannada.)",
-        "te": "ఎల్లప్పుడూ తెలుగులో సమాధానం ఇవ్వండి. (Always respond in Telugu.)",
-        "ta": "எப்போதும் தமிழில் பதில் சொல்லுங்கள். (Always respond in Tamil.)",
-        "mr": "नेहमी मराठीत उत्तर द्या. (Always respond in Marathi.)",
     }.get(language, "Respond only in English.")
 
     occupation = user_context.get("occupation", "unknown")

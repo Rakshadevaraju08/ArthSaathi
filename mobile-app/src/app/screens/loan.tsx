@@ -10,6 +10,7 @@ import { RiskGauge } from '../../components/ui/RiskGauge';
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
 import type { LoanRisk } from '../../types';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -22,6 +23,7 @@ const purposeOptions = {
 
 export default function LoanScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const monthlyIncome = Number(useStore((s) => s.monthlyIncome || 0));
   const monthlyExpenses = Number(useStore((s) => s.monthlyExpenses || 0));
   const hasActiveLoans = useStore((s) => s.hasActiveLoans);
@@ -94,13 +96,13 @@ export default function LoanScreen() {
           end={{ x: 1, y: 1 }}
           style={{ paddingHorizontal: 20, paddingTop: 22, paddingBottom: 26, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
         >
-          <Text className="text-white text-2xl font-black">Loan Risk Check</Text>
-          <Text className="text-emerald-50 text-sm mt-2">Local estimate using your onboarding income, expense and repayment habit.</Text>
+          <Text className="text-white text-2xl font-black">{t.loanRiskTitle}</Text>
+          <Text className="text-emerald-50 text-sm mt-2">{t.tagline}</Text>
         </LinearGradient>
 
         <View className="px-5 mt-5">
           <View className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
-            <Text className="text-slate-500 text-xs font-bold">Estimated eligible amount</Text>
+            <Text className="text-slate-500 text-xs font-bold">{t.estimatedEligibleAmount}</Text>
             <Text className="text-slate-900 text-3xl font-black mt-1">{fmt(eligible)}</Text>
             <Text className="text-slate-500 text-xs mt-2">
               Income {fmt(monthlyIncome)} - Expenses {fmt(monthlyExpenses)}
@@ -108,11 +110,11 @@ export default function LoanScreen() {
           </View>
 
           <View className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
-            <Text className="text-slate-900 font-black mb-3">Loan details</Text>
+            <Text className="text-slate-900 font-black mb-3">{t.loanDetails}</Text>
             <TextInput
               value={amount}
               onChangeText={setAmount}
-              placeholder="Loan amount"
+              placeholder={t.amount}
               keyboardType="numeric"
               placeholderTextColor="#94a3b8"
               className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-3"
@@ -129,7 +131,7 @@ export default function LoanScreen() {
             <View className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3">
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ fontSize: 14, color: '#64748b', fontWeight: '600' }}>
-                  Expected Interest Rate
+                  {t.expectedInterestRate}
                 </Text>
                 <Text style={{ fontSize: 16, color: '#0f172a', fontWeight: '900' }}>
                   {expectedInterest}%
@@ -156,7 +158,7 @@ export default function LoanScreen() {
             <TextInput
               value={purpose}
               onChangeText={setPurpose}
-              placeholder="Purpose"
+              placeholder={t.purpose}
               placeholderTextColor="#94a3b8"
               className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-4"
             />
@@ -177,14 +179,14 @@ export default function LoanScreen() {
             </View>
             <TouchableOpacity onPress={analyze}>
               <LinearGradient colors={[C.emerald500, C.teal600]} style={{ borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}>
-                <Text className="text-white font-black">Analyze Loan</Text>
+                <Text className="text-white font-black">{t.analyzeLoan}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
 
           <View className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-slate-900 font-black">Risk meter</Text>
+              <Text className="text-slate-900 font-black">{t.riskMeter}</Text>
               <View style={{ backgroundColor: `${riskColor}1A`, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
                 <Text style={{ color: riskColor, fontWeight: '900', fontSize: 12, textTransform: 'capitalize' }}>{loanRisk}</Text>
               </View>
@@ -194,21 +196,21 @@ export default function LoanScreen() {
 
           {result ? (
             <View className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
-              <Text className="text-slate-900 font-black mb-3">Analysis result</Text>
+              <Text className="text-slate-900 font-black mb-3">{t.analysisResult}</Text>
               <View className="flex-row mb-3">
                 <View className="flex-1 bg-emerald-50 rounded-xl p-3 mr-2">
-                  <Text className="text-emerald-700 text-xs font-bold">Monthly EMI</Text>
+                  <Text className="text-emerald-700 text-xs font-bold">{t.monthlyEmi}</Text>
                   <Text className="text-emerald-900 text-xl font-black mt-1">{fmt(result.emi)}</Text>
                 </View>
                 <View className="flex-1 bg-blue-50 rounded-xl p-3 ml-2">
-                  <Text className="text-blue-700 text-xs font-bold">Total repayment</Text>
+                  <Text className="text-blue-700 text-xs font-bold">{t.totalRepayment}</Text>
                   <Text className="text-blue-900 text-xl font-black mt-1">{fmt(result.total)}</Text>
                 </View>
               </View>
               <View className="flex-row items-start">
                 <Feather name="info" size={17} color={C.slate500} />
                 <Text className="text-slate-600 text-sm ml-2 flex-1">
-                  Purpose: {purpose}. Keep EMI below one-third of monthly income for a safer local score.
+                  {purpose}. {t.repaymentPurposeHint}
                 </Text>
               </View>
             </View>

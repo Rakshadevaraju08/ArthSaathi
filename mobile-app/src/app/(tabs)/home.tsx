@@ -11,6 +11,7 @@ import { HealthScoreRing } from '../../components/home/HealthScoreRing';
 import { endpoints } from '../../services/api';
 import { C } from '../../constants/colors';
 import { useLocation } from '../../hooks/useLocation';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
 
@@ -39,6 +40,7 @@ function MiniBarChart({ data }: { data: { m: string; v: number }[] }) {
 
 export default function HomeScreen() {
   const router   = useRouter();
+  const t = useTranslations();
   const { income, expense, savings, score } = useTotals();
   const occupation = useStore((s) => s.occupation);
   const transactions = useStore((s) => s.transactions);
@@ -51,8 +53,8 @@ export default function HomeScreen() {
 
   const locationStr = location?.raw
     ?? [user?.village, user?.district].filter(Boolean).join(', ')
-    ?? (locationLoading ? 'Fetching location…' : null)
-    ?? 'Location not set';
+    ?? (locationLoading ? t.fetchingLocation : null)
+    ?? t.locationNotSet;
   const displayName = user?.name || 'User';
 
   const fetchTransactions = async () => {
@@ -121,7 +123,7 @@ export default function HomeScreen() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <View>
           <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#fff', lineHeight: 28 }}>
-            Namaste, {displayName}
+            {t.homeGreeting}, {displayName}
           </Text>
           <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2, fontWeight: '500' }}>
             📍 {locationStr}
@@ -156,10 +158,10 @@ export default function HomeScreen() {
             <HealthScoreRing score={score} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#ecfdf5' }}>
-                Financial Health
+                {t.financialHealth}
               </Text>
               <Text style={{ fontSize: 18, fontWeight: '900', color: '#fff', marginTop: 2 }}>
-                {score > 70 ? '✅ Excellent' : score > 40 ? '⚠️ Good' : '🔴 Needs attention'}
+                {score > 70 ? `✅ ${t.excellent}` : score > 40 ? `⚠️ ${t.good}` : `🔴 ${t.needsAttention}`}
               </Text>
             </View>
           </View>
@@ -187,7 +189,7 @@ export default function HomeScreen() {
             >
               <Feather name="trending-up" size={18} color={C.emerald500} />
             </View>
-            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>Income</Text>
+            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>{t.income}</Text>
             <Text style={{ fontSize: 14, fontWeight: '900', color: '#0f172a', marginTop: 2 }}>
               {fmt(income)}
             </Text>
@@ -212,7 +214,7 @@ export default function HomeScreen() {
             >
               <Feather name="trending-down" size={18} color={C.rose500} />
             </View>
-            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>Expense</Text>
+            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>{t.expenses}</Text>
             <Text style={{ fontSize: 14, fontWeight: '900', color: '#0f172a', marginTop: 2 }}>
               {fmt(expense)}
             </Text>
@@ -237,7 +239,7 @@ export default function HomeScreen() {
             >
               <Ionicons name="wallet-outline" size={18} color={C.blue500} />
             </View>
-            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>Savings</Text>
+            <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 'bold' }}>{t.savings}</Text>
             <Text style={{ fontSize: 14, fontWeight: '900', color: '#0f172a', marginTop: 2 }}>
               {fmt(savings)}
             </Text>
@@ -247,7 +249,7 @@ export default function HomeScreen() {
         {/* ── Loan eligibility — Kotlin style ── */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => router.push('/screens/loan')}
+          onPress={() => router.push('/screens/borrow' as any)}
           style={{ marginHorizontal: 20, marginTop: 12 }}
         >
           <View
@@ -262,10 +264,10 @@ export default function HomeScreen() {
           >
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '900', color: C.emerald600 }}>
-                  🏦 Loan up to {fmt(eligible)}
+                  🏦 {t.borrowerCardTitle}
                 </Text>
                 <Text style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                  Low interest agricultural scheme
+                  {t.openLenderFlow}
                 </Text>
             </View>
             <View
@@ -277,7 +279,7 @@ export default function HomeScreen() {
               }}
             >
               <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>
-                Check →
+                {t.check} →
               </Text>
             </View>
           </View>
@@ -286,7 +288,7 @@ export default function HomeScreen() {
         {/* ── Quick Services ── */}
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
           <Text style={{ fontSize: 16, fontWeight: '900', color: '#1e293b', marginBottom: 12 }}>
-            Quick Services
+            {t.quickServices}
           </Text>
 
           {/* Row 1 */}
@@ -316,7 +318,7 @@ export default function HomeScreen() {
                   <Feather name="plus" size={20} color={C.emerald500} />
                 </View>
                 <Text style={{ fontSize: 13, fontWeight: '900', color: '#1e293b', lineHeight: 16 }}>
-                  Add{'\n'}Transaction
+                  {t.addTransaction}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -346,7 +348,7 @@ export default function HomeScreen() {
                   <Feather name="briefcase" size={20} color={C.teal600} />
                 </View>
                 <Text style={{ fontSize: 13, fontWeight: '900', color: '#1e293b', lineHeight: 16 }}>
-                  My{'\n'}Business
+                  {t.myBusiness}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -379,7 +381,7 @@ export default function HomeScreen() {
                   <Ionicons name="checkmark-circle-outline" size={20} color={C.blue500} />
                 </View>
                 <Text style={{ fontSize: 13, fontWeight: '900', color: '#1e293b', lineHeight: 16 }}>
-                  Loan{'\n'}Risk Check
+                  {t.loanRiskCheck}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -409,7 +411,7 @@ export default function HomeScreen() {
                 <Feather name="bar-chart-2" size={20} color={C.amber600} />
                 </View>
                 <Text style={{ fontSize: 13, fontWeight: '900', color: '#1e293b', lineHeight: 16 }}>
-                Smart{'\n'}Insights
+                {t.smartInsights}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -429,7 +431,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '900', color: '#1e293b', marginBottom: 14 }}>
-              Monthly Spending Trends
+              {t.monthlySpendingTrends}
             </Text>
             <MiniBarChart data={monthly} />
           </View>
@@ -439,17 +441,17 @@ export default function HomeScreen() {
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Text style={{ fontSize: 16, fontWeight: '900', color: '#1e293b' }}>
-              Recent Transactions
+              {t.recentTransactions}
             </Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/ledger')}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: C.emerald600 }}>See all →</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: C.emerald600 }}>{t.seeAll} →</Text>
             </TouchableOpacity>
           </View>
 
           <View style={{ gap: 8 }}>
             {recentTx.length === 0 ? (
               <View style={{ padding: 20, alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 14 }}>No recorded transactions</Text>
+                <Text style={{ color: '#64748b', fontSize: 14 }}>{t.noRecordedTransactions}</Text>
               </View>
             ) : (
               recentTx.map((tx) => {

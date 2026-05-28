@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { C } from '../../constants/colors';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const { width: SW } = Dimensions.get('window');
 const fmt = (n: number) => 'Rs ' + n.toLocaleString('en-IN');
@@ -22,6 +23,7 @@ const RING_SIZE = 160;
 const STROKE = 14;
 
 function ArthScoreRing({ score, max = 1000 }: { score: number; max?: number }) {
+  const t = useTranslations();
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -35,7 +37,7 @@ function ArthScoreRing({ score, max = 1000 }: { score: number; max?: number }) {
 
   const pct = score / max;
   const ringColor = pct > 0.7 ? C.emerald500 : pct > 0.45 ? C.amber500 : C.rose500;
-  const label = pct > 0.7 ? 'EXCELLENT' : pct > 0.55 ? 'GOOD' : pct > 0.4 ? 'FAIR' : 'POOR';
+  const label = pct > 0.7 ? t.excellent : pct > 0.55 ? t.good : pct > 0.4 ? t.fair : t.poor;
   const labelColor = pct > 0.7 ? C.emerald600 : pct > 0.45 ? C.amber600 : C.rose600;
   const labelBg = pct > 0.7 ? C.emerald50 : pct > 0.45 ? '#fffbeb' : '#fff1f2';
 
@@ -123,6 +125,7 @@ function RepaymentChart({ emi, income, months }: { emi: number; income: number; 
 
 export default function LoanResultScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const params = useLocalSearchParams();
   const score = Number(params.score ?? 742);
   const emi = Number(params.emi ?? 2800);
@@ -134,20 +137,20 @@ export default function LoanResultScreen() {
   const risk = (params.risk ?? 'safe') as 'safe' | 'moderate' | 'high';
   const purpose = params.purpose ?? 'Working capital';
 
-  const riskLabel = risk === 'safe' ? 'Low Risk Borrower' : risk === 'moderate' ? 'Moderate Risk' : 'High Risk';
+  const riskLabel = risk === 'safe' ? t.lowRiskBorrower : risk === 'moderate' ? t.moderateRiskBorrower : t.highRiskBorrower;
   const riskColor = risk === 'safe' ? C.emerald600 : risk === 'moderate' ? C.amber600 : C.rose600;
   const riskBg = risk === 'safe' ? C.emerald50 : risk === 'moderate' ? '#fffbeb' : '#fff1f2';
 
   const scoreFactors = [
-    { ok: true, label: 'Regular transactions recorded' },
-    { ok: true, label: 'No existing defaults' },
-    { ok: true, label: 'Land collateral available (RTC)' },
-    { ok: true, label: '6+ months app history' },
-    { ok: false, label: 'Irregular income in past months' },
-    { ok: false, label: 'High expense-to-income ratio' },
+    { ok: true, label: t.regularTransactionsRecorded },
+    { ok: true, label: t.noExistingDefaults },
+    { ok: true, label: t.landCollateralAvailable },
+    { ok: true, label: t.appHistorySixMonths },
+    { ok: false, label: t.irregularIncomePastMonths },
+    { ok: false, label: t.highExpenseRatio },
   ];
 
-  const riskFactors = ['Seasonal income - 3 low income months per year', 'No formal credit bureau history'];
+  const riskFactors = [t.seasonalIncomeThreeMonths, t.noFormalCreditHistory];
 
   const slideAnim = useRef(new Animated.Value(40)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -166,7 +169,7 @@ export default function LoanResultScreen() {
         </TouchableOpacity>
         <View className="flex-1 items-center">
           <Text className="text-xl font-black text-white tracking-wide">ArthScore</Text>
-          <Text className="text-[11px] text-white/75 mt-0.5">Your Loan Eligibility Report</Text>
+          <Text className="text-[11px] text-white/75 mt-0.5">{t.loanEligibilityReport}</Text>
         </View>
         <View className="w-10" />
       </LinearGradient>
@@ -179,23 +182,23 @@ export default function LoanResultScreen() {
               <View className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: riskColor }} />
               <Text className="text-[13px] font-extrabold" style={{ color: riskColor }}>{riskLabel}</Text>
             </View>
-            <Text className="text-xs text-slate-400 text-center">Based on your income, expenses & repayment habits</Text>
+            <Text className="text-xs text-slate-400 text-center">{t.basedOnIncomeExpensesHabits}</Text>
           </View>
 
-          <SectionCard title="Loan Summary">
-            <SummaryRow icon="✓" label="Eligible Amount" value={fmt(eligible)} valueColor={C.emerald600} />
-            <SummaryRow icon="📅" label="Best Tenure" value={`${tenure} months`} />
-            <SummaryRow icon="💰" label="Monthly EMI" value={fmt(emi)} />
-            <SummaryRow icon="📊" label="Interest Rate" value={`~${interest}%`} />
-            <SummaryRow icon="💸" label="Total Payable" value={fmt(total)} valueColor={C.rose600} />
+          <SectionCard title={t.loanSummary}>
+            <SummaryRow icon="✓" label={t.eligibleAmount} value={fmt(eligible)} valueColor={C.emerald600} />
+            <SummaryRow icon="📅" label={t.bestTenure} value={`${tenure} ${t.months}`} />
+            <SummaryRow icon="💰" label={t.monthlyEmi} value={fmt(emi)} />
+            <SummaryRow icon="📊" label={t.interestRate} value={`~${interest}%`} />
+            <SummaryRow icon="💸" label={t.totalPayable} value={fmt(total)} valueColor={C.rose600} />
           </SectionCard>
 
-          <SectionCard title="Repayment Forecast">
-            <Text className="text-xs text-slate-400 mb-3">Monthly EMI vs. Income over loan tenure</Text>
+          <SectionCard title={t.repaymentForecast}>
+            <Text className="text-xs text-slate-400 mb-3">{t.monthlyEmiVsIncomeOverTenure}</Text>
             <RepaymentChart emi={emi} income={income} months={tenure} />
           </SectionCard>
 
-          <SectionCard title="Why This Score?">
+          <SectionCard title={t.whyThisScore}>
             {scoreFactors.map((f, i) => (
               <View key={i} className="flex-row items-center py-1.5">
                 <Text className="text-[15px] mr-2">{f.ok ? '✅' : '⚠️'}</Text>
@@ -204,7 +207,7 @@ export default function LoanResultScreen() {
             ))}
           </SectionCard>
 
-          <SectionCard title="Risk Factors">
+          <SectionCard title={t.riskFactors}>
             {riskFactors.map((r, i) => (
               <View key={i} className="flex-row items-start py-1">
                 <View className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 mr-2.5" />
@@ -213,10 +216,10 @@ export default function LoanResultScreen() {
             ))}
           </SectionCard>
 
-          <SectionCard title="Recommended Products">
-            <ProductCard icon="🏛" name="SBI Kisan Credit Card" rate="7% p.a." upto="₹3L" tag="Best Rate" url="https://sbi.co.in" />
-            <ProductCard icon="🌾" name="NABARD Farm Loan" rate="9% p.a." upto="₹5L" url="https://nabard.org" />
-            <ProductCard icon="🤝" name="Grameen MFI Loan" rate="14% p.a." upto="₹1L" url="https://nabard.org" />
+          <SectionCard title={t.recommendedProducts}>
+            <ProductCard icon="🏛" name={t.sbiKisanCreditCard ?? 'SBI Kisan Credit Card'} rate="7% p.a." upto="₹3L" tag={t.lowRiskBorrower} url="https://sbi.co.in" />
+            <ProductCard icon="🌾" name={t.nabardFarmLoan ?? 'NABARD Farm Loan'} rate="9% p.a." upto="₹5L" url="https://nabard.org" />
+            <ProductCard icon="🤝" name={t.grameenMfiLoan ?? 'Grameen MFI Loan'} rate="14% p.a." upto="₹1L" url="https://nabard.org" />
           </SectionCard>
         </Animated.View>
       </ScrollView>

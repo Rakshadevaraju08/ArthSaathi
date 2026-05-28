@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { C } from '../../constants/colors';
 import { endpoints } from '../../services/api';
+import { useTranslations } from '../../hooks/useTranslations';
 import type { CropMeta, Transaction } from '../../types';
 
 type CropRow = {
@@ -39,6 +40,7 @@ function txToCropRow(tx: Transaction): CropRow {
 }
 
 export function MandiDashboard() {
+  const t = useTranslations();
   const [rows, setRows]         = useState<CropRow[]>([]);
   const [loading, setLoading]   = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +61,7 @@ export function MandiDashboard() {
       ];
       setRows(cropTxs.map(txToCropRow));
     } catch (e) {
-      Alert.alert('Error', 'Could not load crop entries. Check your connection.');
+      Alert.alert('Error', t.couldNotLoadData);
     } finally {
       setLoading(false);
       setRefreshing(false);

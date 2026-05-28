@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { useTranslations } from '../../hooks/useTranslations';
 
 const baseInsights = {
   FARMER: [
@@ -40,15 +41,16 @@ const TAG_COLOR: Record<string, string> = {
 
 export default function InsightsScreen() {
   const router = useRouter();
+  const t = useTranslations();
   const occupation = useStore((s) => s.occupation);
   const insights = baseInsights[occupation];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }} edges={['top']}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 18, backgroundColor: '#fff' }}>
-        <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>Smart Insights</Text>
+        <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>{t.smartInsights}</Text>
         <TouchableOpacity onPress={() => router.push('/screens/voice')} style={{ backgroundColor: '#ecfdf5', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 }}>
-          <Text style={{ fontSize: 12, fontWeight: 'bold', color: C.emerald600 }}>Ask AI</Text>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: C.emerald600 }}>{t.askAi}</Text>
         </TouchableOpacity>
       </View>
 
@@ -87,12 +89,12 @@ export default function InsightsScreen() {
 
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/screens/voice')} style={{ marginTop: 18, marginBottom: 18 }}>
           <View style={{ backgroundColor: C.emerald600, borderRadius: 16, padding: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>Want deeper financial analysis?</Text>
+            <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16, marginBottom: 4 }}>{t.wantDeeperFinancialAnalysis}</Text>
             <Text style={{ color: '#ecfdf5', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
-              Use ArthSaathi Voice Assistant from the center mic button.
+              {t.voiceAssistantHelp}
             </Text>
             <View style={{ marginTop: 12, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 8 }}>
-              <Text style={{ color: C.emerald600, fontWeight: 'bold', fontSize: 13 }}>Start Voice Assistant</Text>
+              <Text style={{ color: C.emerald600, fontWeight: 'bold', fontSize: 13 }}>{t.startVoiceAssistant}</Text>
             </View>
           </View>
         </TouchableOpacity>

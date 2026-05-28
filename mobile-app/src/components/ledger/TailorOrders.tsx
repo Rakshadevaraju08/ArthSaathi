@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { C } from '../../constants/colors';
 import { endpoints } from '../../services/api';
+import { useTranslations } from '../../hooks/useTranslations';
 import type { DeliveryMeta, OrderMeta, Transaction } from '../../types';
 
 type OrderRow = {
@@ -58,6 +59,7 @@ function txToDelivery(tx: Transaction): DeliveryRow {
 }
 
 export function TailorOrders() {
+  const t = useTranslations();
   const [orders, setOrders]         = useState<OrderRow[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -75,7 +77,7 @@ export function TailorOrders() {
       setOrders((grouped['Order']    ?? []).map(txToOrder));
       setDeliveries((grouped['Delivery'] ?? []).map(txToDelivery));
     } catch {
-      Alert.alert('Error', 'Could not load tailor orders. Check your connection.');
+      Alert.alert('Error', t.couldNotLoadData);
     } finally {
       setLoading(false);
       setRefreshing(false);

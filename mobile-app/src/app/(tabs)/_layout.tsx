@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { MicFAB } from '../../components/MicFAB';
 import { C } from '../../constants/colors';
 import { useStore } from '../../store';
+import { useTranslations } from '../../hooks/useTranslations';
 
 function TabIcon({
   name,
@@ -32,6 +33,7 @@ function TabIcon({
 
 export default function TabLayout() {
   const isRegistered = useStore((s) => s.isRegistered);
+  const t = useTranslations();
 
   if (!isRegistered) {
     return <Redirect href="/signup" />;
@@ -71,15 +73,15 @@ export default function TabLayout() {
         <Tabs.Screen
           name="home"
           options={{
-            title: 'Home',
-            tabBarIcon: ({ focused }) => <TabIcon name="home" label="Home" focused={focused} />,
+            title: t.tabHome,
+            tabBarIcon: ({ focused }) => <TabIcon name="home" label={t.tabHome} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="ledger"
           options={{
-            title: 'Ledger',
-            tabBarIcon: ({ focused }) => <TabIcon name="pie-chart" label="Ledger" focused={focused} />,
+            title: t.tabLedger,
+            tabBarIcon: ({ focused }) => <TabIcon name="pie-chart" label={t.tabLedger} focused={focused} />,
           }}
         />
         <Tabs.Screen
@@ -93,15 +95,15 @@ export default function TabLayout() {
         <Tabs.Screen
           name="insights"
           options={{
-            title: 'Insights',
-            tabBarIcon: ({ focused }) => <TabIcon name="bar-chart-2" label="Insights" focused={focused} />,
+            title: t.tabInsights,
+            tabBarIcon: ({ focused }) => <TabIcon name="bar-chart-2" label={t.tabInsights} focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
-            tabBarIcon: ({ focused }) => <TabIcon name="user" label="Profile" focused={focused} />,
+            title: t.tabProfile,
+            tabBarIcon: ({ focused }) => <TabIcon name="user" label={t.tabProfile} focused={focused} />,
           }}
         />
       </Tabs>

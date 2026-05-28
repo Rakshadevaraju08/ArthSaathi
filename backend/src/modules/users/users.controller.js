@@ -1,15 +1,14 @@
 // src/modules/users/users.controller.js
 
-const usersService = require("./users.service");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
+const usersService = require('./users.service');
+const { sendSuccess } = require('../../utils/apiResponse');
 
 /**
- * GET /api/users/profile
+ * GET /api/users/me
  */
-const getProfile = async (req, res, next) => {
+const getMe = async (req, res, next) => {
   try {
-    const user = await usersService.getUserById(req.user.id);
-    return sendSuccess(res, "Profile fetched successfully.", user);
+    return sendSuccess(res, 'User fetched successfully.', req.user);
   } catch (error) {
     next(error);
   }
@@ -17,14 +16,15 @@ const getProfile = async (req, res, next) => {
 
 /**
  * PUT /api/users/profile
+ * Update basic user fields: name, language, village, district
  */
 const updateProfile = async (req, res, next) => {
   try {
-    const user = await usersService.updateUser(req.user.id, req.body);
-    return sendSuccess(res, "Profile updated successfully.", user);
+    const updated = await usersService.updateProfile(req.user.id, req.body);
+    return sendSuccess(res, 'Profile updated successfully.', updated);
   } catch (error) {
     next(error);
   }
 };
 
-module.exports = { getProfile, updateProfile };
+module.exports = { getMe, updateProfile };

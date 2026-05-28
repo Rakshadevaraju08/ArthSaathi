@@ -21,14 +21,33 @@ const addTransaction = async (req, res, next) => {
 const getAllTransactions = async (req, res, next) => {
   try {
     const filters = {
-      type: req.query.type,
-      category: req.query.category,
+      type:      req.query.type,
+      category:  req.query.category,
       startDate: req.query.startDate,
-      endDate: req.query.endDate,
+      endDate:   req.query.endDate,
     };
 
     const transactions = await transactionsService.getAllTransactions(req.user.id, filters);
     return sendSuccess(res, "Transactions fetched successfully.", transactions);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/transactions/ledger?occupation=FARMER|SHOP_OWNER|TAILOR|DAILY_WAGE
+ * Returns all ledger entries for the authenticated user's occupation,
+ * grouped by category.
+ */
+const getLedgerEntries = async (req, res, next) => {
+  try {
+    const { occupation } = req.query;
+    if (!occupation) {
+      return sendError(res, "occupation query param is required.", 400);
+    }
+
+    const data = await transactionsService.getLedgerEntries(req.user.id, occupation.toUpperCase());
+    return sendSuccess(res, "Ledger entries fetched successfully.", data);
   } catch (error) {
     next(error);
   }
@@ -80,6 +99,7 @@ const deleteTransaction = async (req, res, next) => {
 module.exports = {
   addTransaction,
   getAllTransactions,
+  getLedgerEntries,
   getTransactionById,
   updateTransaction,
   deleteTransaction,

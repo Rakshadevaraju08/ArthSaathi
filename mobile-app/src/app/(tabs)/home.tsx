@@ -262,11 +262,11 @@ export default function HomeScreen() {
           >
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '900', color: C.emerald600 }}>
-                🏦 Loan up to {fmt(eligible)}
-              </Text>
-              <Text style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                Low interest agricultural scheme
-              </Text>
+                  🏦 Loan up to {fmt(eligible)}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
+                  Low interest agricultural scheme
+                </Text>
             </View>
             <View
               style={{

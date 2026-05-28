@@ -58,7 +58,6 @@ export default function LoanScreen() {
         ? 'moderate'
         : 'safe';
 
-    // Compute ArthScore (0-1000): savings rate + repayment habit + burden
     const savingsRate = monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0;
     const habitBonus = pastRepaymentHabit === 'Never Missed' ? 200 : pastRepaymentHabit === 'Sometimes Delayed' ? 80 : 0;
     const burdenPenalty = Math.round(burden * 300);
@@ -68,7 +67,6 @@ export default function LoanScreen() {
     setLoanRisk(risk);
     setResult({ emi: Math.round(emi), total: Math.round(emi * tenure), risk, eligible });
 
-    // Navigate to ArthScore result screen
     router.push({
       pathname: '/screens/loan-result',
       params: {
@@ -127,8 +125,7 @@ export default function LoanScreen() {
               placeholderTextColor="#94a3b8"
               className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 mb-3"
             />
-            
-            {/* The Interest Rate Dragger UI */}
+
             <View className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3">
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ fontSize: 14, color: '#64748b', fontWeight: '600' }}>

@@ -3,18 +3,29 @@
 
 const prisma = require("../../config/db");
 
+// ─────────────────────────────────────────
+// Categories per occupation for ledger queries
+// ─────────────────────────────────────────
+const LEDGER_CATEGORIES = {
+  FARMER:     ["Crop Sale", "Input Cost"],
+  SHOP_OWNER: ["Udhar", "Stock"],
+  TAILOR:     ["Order", "Delivery"],
+  DAILY_WAGE: ["Shift", "Payment Due"],
+};
+
 /**
- * Add a new transaction
+ * Add a new transaction (ledgerMeta is stored if provided)
  */
-const addTransaction = async (userId, { amount, type, category, note, date }) => {
+const addTransaction = async (userId, { amount, type, category, note, date, ledgerMeta }) => {
   const transaction = await prisma.transaction.create({
     data: {
       userId,
-      amount: parseFloat(amount),
+      amount:     parseFloat(amount),
       type,
       category,
-      note: note || null,
-      date: date ? new Date(date) : new Date(),
+      note:       note || null,
+      date:       date ? new Date(date) : new Date(),
+      ledgerMeta: ledgerMeta ?? null,
     },
   });
 
@@ -34,7 +45,7 @@ const getAllTransactions = async (userId, filters = {}) => {
   if (filters.startDate || filters.endDate) {
     where.date = {};
     if (filters.startDate) where.date.gte = new Date(filters.startDate);
-    if (filters.endDate) where.date.lte = new Date(filters.endDate);
+    if (filters.endDate)   where.date.lte = new Date(filters.endDate);
   }
 
   const transactions = await prisma.transaction.findMany({
@@ -43,6 +54,36 @@ const getAllTransactions = async (userId, filters = {}) => {
   });
 
   return transactions;
+};
+
+/**
+ * Get all ledger entries for a specific occupation.
+ * Returns entries matching the occupation's category set,
+ * plus a grouped breakdown by category.
+ */
+const getLedgerEntries = async (userId, occupation) => {
+  const categories = LEDGER_CATEGORIES[occupation];
+  if (!categories) {
+    const err = new Error(`Unknown occupation: ${occupation}`);
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const entries = await prisma.transaction.findMany({
+    where: {
+      userId,
+      category: { in: categories },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  // Group by category for easy consumption by the frontend
+  const grouped = {};
+  for (const cat of categories) {
+    grouped[cat] = entries.filter((e) => e.category === cat);
+  }
+
+  return { entries, grouped };
 };
 
 /**
@@ -69,15 +110,14 @@ const updateTransaction = async (userId, transactionId, updateData) => {
   // First check ownership
   await getTransactionById(userId, transactionId);
 
-  const allowedFields = ["amount", "type", "category", "note", "date"];
+  const allowedFields = ["amount", "type", "category", "note", "date", "ledgerMeta"];
   const filteredData = {};
 
   allowedFields.forEach((field) => {
     if (updateData[field] !== undefined) {
-      filteredData[field] = field === "amount"
-        ? parseFloat(updateData[field])
-        : field === "date"
-        ? new Date(updateData[field])
+      filteredData[field] =
+        field === "amount" ? parseFloat(updateData[field])
+        : field === "date" ? new Date(updateData[field])
         : updateData[field];
     }
   });
@@ -105,6 +145,7 @@ const deleteTransaction = async (userId, transactionId) => {
 module.exports = {
   addTransaction,
   getAllTransactions,
+  getLedgerEntries,
   getTransactionById,
   updateTransaction,
   deleteTransaction,

@@ -46,6 +46,10 @@ type Store = PrimaryRegistrationData & {
   rtcUploaded: boolean;
   rtcData: RtcData | null;
   loanRisk: LoanRisk;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  hasActiveLoans: boolean;
+  pastRepaymentHabit: RepaymentHabit;
   onboarded: boolean;
   isLoggedIn: boolean;
   isRegistered: boolean;
@@ -68,6 +72,7 @@ type Store = PrimaryRegistrationData & {
   addLoan: (loan: Omit<Loan, 'id'>) => void;
   updateLoan: (id: string, updates: Partial<Loan>) => void;
   removeLoan: (id: string) => void;
+  recordLoanRepayment: (id: string, paidAmount: number, method: string) => void;
 
   setPrimaryRegistration: (data: PrimaryRegistrationData) => void;
   completeRegistration: () => void;
@@ -111,10 +116,48 @@ export const useStore = create<Store>((set) => ({
   rtcUploaded: false,
   rtcData: null,
   loanRisk: 'safe',
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
+  hasActiveLoans: false,
+  pastRepaymentHabit: 'Never Missed',
   onboarded: false,
   isLoggedIn: false,
   isRegistered: false,
-  loans: [],
+  loans: [
+    {
+      id: 'loan-1',
+      type: 'borrowed',
+      personName: 'SBI Kisan Branch',
+      amount: 50000,
+      remainingAmount: 18500,
+      interestRate: 10.5,
+      dueDate: '2026-06-12',
+      status: 'active',
+      date: '2026-01-18',
+    },
+    {
+      id: 'loan-2',
+      type: 'borrowed',
+      personName: 'Krishi Cooperative Bank',
+      amount: 32000,
+      remainingAmount: 12400,
+      interestRate: 9.2,
+      dueDate: '2026-05-30',
+      status: 'overdue',
+      date: '2026-02-04',
+    },
+    {
+      id: 'loan-3',
+      type: 'borrowed',
+      personName: 'Village Trader Ramesh',
+      amount: 14000,
+      remainingAmount: 4200,
+      interestRate: 18,
+      dueDate: '2026-06-05',
+      status: 'active',
+      date: '2026-03-15',
+    },
+  ],
   onboardingInputMode: 'TEXT',
 
   setToken: (t) => set({ token: t }),
@@ -153,6 +196,37 @@ export const useStore = create<Store>((set) => ({
       loans: s.loans.map((l) => (l.id === id ? { ...l, ...updates } : l)),
     })),
   removeLoan: (id) => set((s) => ({ loans: s.loans.filter((l) => l.id !== id) })),
+  recordLoanRepayment: (id, paidAmount, method) =>
+    set((s) => {
+      const loan = s.loans.find((item) => item.id === id);
+      if (!loan) return s;
+
+      const safePaidAmount = Math.max(0, Math.min(paidAmount, loan.remainingAmount));
+      const nextRemaining = Math.max(0, loan.remainingAmount - safePaidAmount);
+
+      return {
+        loans: s.loans.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                remainingAmount: nextRemaining,
+                status: nextRemaining === 0 ? 'paid' : 'active',
+              }
+            : item
+        ),
+        transactions: [
+          {
+            id: `rep-${Date.now()}`,
+            type: 'expense',
+            amount: safePaidAmount,
+            category: 'Loan Repayment',
+            note: `Paid to ${loan.personName} via ${method}`,
+            date: new Date().toISOString(),
+          },
+          ...s.transactions,
+        ],
+      };
+    }),
 
   setPrimaryRegistration: (data) =>
     set({
@@ -176,6 +250,10 @@ export const useStore = create<Store>((set) => ({
       isRegistered: false,
       isLoggedIn: false,
       onboarded: false,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      hasActiveLoans: false,
+      pastRepaymentHabit: 'Never Missed',
       transactions: [],
       loans: [],
     }),

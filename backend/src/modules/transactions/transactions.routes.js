@@ -9,6 +9,10 @@ const authMiddleware = require("../../middlewares/auth.middleware");
 // All transaction routes are protected
 router.use(authMiddleware);
 
+// GET /api/transactions/ledger?occupation=FARMER|SHOP_OWNER|TAILOR|DAILY_WAGE
+// NOTE: must be registered BEFORE /:id to avoid "ledger" being caught as an id param
+router.get("/ledger", transactionsController.getLedgerEntries);
+
 // POST /api/transactions
 router.post("/", transactionsController.addTransaction);
 

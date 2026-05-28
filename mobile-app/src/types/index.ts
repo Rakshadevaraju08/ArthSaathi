@@ -1,6 +1,63 @@
 export type Lang = 'English' | 'Hindi' | 'Kannada' | 'Marathi' | 'Tamil' | 'Telugu';
 export type TxType = 'income' | 'expense' | 'saving';
 
+// ── Profession-specific ledger meta types ──
+export type CropMeta = {
+  crop: string;
+  status: string;
+  pricePerQtl: string;
+  trend: string;
+  progress: number;
+};
+
+export type UdharMeta = {
+  personName: string;
+  status: string;
+};
+
+export type StockMeta = {
+  itemName: string;
+  daysStock: string;
+  turnCycle: string;
+  level: number;
+};
+
+export type OrderMeta = {
+  orderName: string;
+  pieceCount: string;
+  status: string;
+  dueDate: string;
+  progress: number;
+};
+
+export type DeliveryMeta = {
+  customer: string;
+  deliveryItem: string;
+  deliveryTime: string;
+};
+
+export type ShiftMeta = {
+  siteName: string;
+  daysWorked: string;
+  status: string;
+  progress: number;
+};
+
+export type PaymentMeta = {
+  personName: string;
+  dueDate: string;
+};
+
+export type LedgerMeta =
+  | CropMeta
+  | UdharMeta
+  | StockMeta
+  | OrderMeta
+  | DeliveryMeta
+  | ShiftMeta
+  | PaymentMeta
+  | Record<string, any>;
+
 export type Transaction = {
   id: string;
   type: TxType;
@@ -8,6 +65,7 @@ export type Transaction = {
   category: string;
   note: string;       // was "label" — backend uses "note"
   date: string;
+  ledgerMeta?: LedgerMeta | null;
 };
 
 export type NotifType = 'alert' | 'tip' | 'info';
@@ -98,4 +156,10 @@ export type FinancialGuidanceResult = {
     guidance: string;
     tips: string[];
   };
+};
+
+// ── Ledger API response type ───────────────
+export type LedgerResponse = {
+  entries: Transaction[];
+  grouped: Record<string, Transaction[]>;
 };

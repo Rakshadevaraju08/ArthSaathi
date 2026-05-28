@@ -42,6 +42,21 @@ export default function RootLayout() {
         />
 
         <Stack.Screen
+          name="screens/loan-result"
+          options={{ presentation: 'card' }}
+        />
+
+        <Stack.Screen
+          name="screens/borrow"
+          options={{ presentation: 'card' }}
+        />
+
+        <Stack.Screen
+          name="screens/borrow-result"
+          options={{ presentation: 'card' }}
+        />
+
+        <Stack.Screen
           name="screens/scam"
           options={{ presentation: 'card' }}
         />

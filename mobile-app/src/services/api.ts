@@ -172,6 +172,32 @@ export const endpoints = {
   deleteTransaction: (id: string) =>
     api.delete(`/transactions/${id}`),
 
+  // ── Ledger (profession-specific) ────────
+  /**
+   * Fetch all ledger entries for a given occupation.
+   * Returns { entries: Transaction[], grouped: Record<category, Transaction[]> }
+   */
+  getLedgerEntries: (occupation: 'FARMER' | 'SHOP_OWNER' | 'TAILOR' | 'DAILY_WAGE') =>
+    api.get('/transactions/ledger', { params: { occupation } }),
+
+  /**
+   * Add a ledger entry. Same as addTransaction but accepts `ledgerMeta`.
+   */
+  addLedgerEntry: (body: {
+    amount: number;
+    type: 'income' | 'expense' | 'saving';
+    category: string;
+    note?: string;
+    date?: string;
+    ledgerMeta?: Record<string, any>;
+  }) => api.post('/transactions', body),
+
+  /**
+   * Delete a ledger entry by transaction id.
+   */
+  deleteLedgerEntry: (id: string) =>
+    api.delete(`/transactions/${id}`),
+
   // ── Dashboard ───────────────────────────
   getDashboard: () => api.get('/dashboard'),
 
@@ -198,3 +224,4 @@ export const endpoints = {
 
   getRtcRecords: () => api.get('/rtc'),
 };
+
